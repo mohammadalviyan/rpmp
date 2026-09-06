@@ -44,11 +44,15 @@ func NewAuth(login LoginUsecase, current CurrentUserUsecase, logout LogoutUsecas
 
 func (h *Auth) Routes(verifier middleware.TokenVerifier, allowedOrigin string) http.Handler {
 	mux := http.NewServeMux()
+	h.Mount(mux, verifier, allowedOrigin)
+	return middleware.RequestID(mux)
+}
+
+func (h *Auth) Mount(mux *http.ServeMux, verifier middleware.TokenVerifier, allowedOrigin string) {
 	mux.Handle("POST /api/v1/auth/login", middleware.RequireOrigin(allowedOrigin, http.HandlerFunc(h.Login)))
 	mux.Handle("GET /api/v1/auth/me", middleware.RequireAuthentication(verifier, http.HandlerFunc(h.Me)))
 	logout := middleware.ResolveAuthentication(verifier, http.HandlerFunc(h.Logout))
 	mux.Handle("POST /api/v1/auth/logout", middleware.RequireOrigin(allowedOrigin, logout))
-	return middleware.RequestID(mux)
 }
 
 func (h *Auth) Login(w http.ResponseWriter, r *http.Request) {
@@ -148,6 +152,10 @@ func writeError(w http.ResponseWriter, err error) {
 		status, message = http.StatusUnauthorized, "Authentication is required."
 	case domain.KindForbidden:
 		status, message = http.StatusForbidden, "You are not authorized to perform this action."
+	case domain.KindInvalidPeriod:
+		status, message = http.StatusBadRequest, "The requested period is invalid."
+	case domain.KindSourceUnavailable:
+		status, message = http.StatusServiceUnavailable, "Operational data is temporarily unavailable."
 	default:
 		kind = domain.KindInternal
 	}
