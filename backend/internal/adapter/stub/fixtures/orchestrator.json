@@ -1,0 +1,27 @@
+{
+  "Availability": "Available",
+  "LastSuccessfulSync": "2026-09-06T00:00:00Z",
+  "Releases": [
+    {"Key": "uc-01", "EnvironmentStatus": "Available"},
+    {"Key": "uc-02", "EnvironmentStatus": "Available"},
+    {"Key": "uc-03", "EnvironmentStatus": "Available"},
+    {"Key": "uc-04", "EnvironmentStatus": "Available"},
+    {"Key": "uc-05", "EnvironmentStatus": "Available"},
+    {"Key": "uc-06", "EnvironmentStatus": "Available"},
+    {"Key": "uc-07", "EnvironmentStatus": "Available"},
+    {"Key": "uc-08", "EnvironmentStatus": "Available"},
+    {"Key": "uc-09", "EnvironmentStatus": "Available"},
+    {"Key": "uc-10", "EnvironmentStatus": "Disabled"},
+    {"Key": "uc-11", "EnvironmentStatus": "Retired"},
+    {"Key": "uc-12", "EnvironmentStatus": "Disabled"}
+  ],
+  "Jobs": [
+    {"ReleaseKey": "uc-01", "CreationTime": "2026-08-07T00:00:00Z", "JobState": 3, "Count": 1},
+    {"ReleaseKey": "uc-01", "CreationTime": "2026-08-20T12:00:00Z", "JobState": 3, "Count": 93},
+    {"ReleaseKey": "uc-02", "CreationTime": "2026-08-15T08:00:00Z", "JobState": 4, "Count": 4},
+    {"ReleaseKey": "uc-03", "CreationTime": "2026-08-22T09:00:00Z", "JobState": 6, "Count": 2},
+    {"ReleaseKey": "uc-01", "CreationTime": "2026-08-06T23:59:59Z", "JobState": 3, "Count": 5},
+    {"ReleaseKey": "uc-01", "CreationTime": "2026-09-06T00:00:00Z", "JobState": 3, "Count": 7},
+    {"ReleaseKey": "uc-02", "CreationTime": "2026-09-06T00:00:00Z", "JobState": 4, "Count": 3}
+  ]
+}
