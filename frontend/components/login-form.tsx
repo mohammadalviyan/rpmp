@@ -87,6 +87,7 @@ export function LoginForm() {
       <div className="space-y-2">
         <Label htmlFor="employee_id">Employee ID</Label>
         <Input
+          className="h-10"
           id="employee_id"
           name="employee_id"
           type="text"
@@ -100,6 +101,7 @@ export function LoginForm() {
       <div className="space-y-2">
         <Label htmlFor="password">Password</Label>
         <Input
+          className="h-10"
           id="password"
           name="password"
           type="password"
@@ -115,7 +117,12 @@ export function LoginForm() {
         </p>
       ) : null}
 
-      <Button className="h-10 w-full" type="submit" disabled={pending}>
+      {/* Login-only hover so the CTA lands on Cakrawala 600 instead of primary/80. */}
+      <Button
+        className="h-10 w-full text-sm font-semibold hover:bg-[var(--bri-primary-cakrawala-600)]"
+        type="submit"
+        disabled={pending}
+      >
         {pending ? "Signing in..." : "Sign in"}
       </Button>
     </form>
