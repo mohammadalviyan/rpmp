@@ -6,9 +6,27 @@ vi.mock("next/headers", () => ({
   }),
 }));
 
-const { getCurrentUser } = await import("@/lib/api/server");
+const { getCurrentUser, getDashboardSummary } = await import("@/lib/api/server");
 
 const fetchMock = vi.fn();
+const dashboardSummary = {
+  period: {
+    from: "2026-08-07T00:00:00Z",
+    to: "2026-09-06T00:00:00Z",
+    timezone: "UTC",
+  },
+  freshness: {
+    status: "fresh",
+    last_successful_refresh_at: "2026-09-06T00:00:00Z",
+  },
+  kpis: {
+    total_use_cases: 12,
+    active_use_cases: 9,
+    execution_volume: 100,
+    success_rate: 94,
+    failed_executions: 6,
+  },
+};
 
 describe("getCurrentUser", () => {
   beforeEach(() => {
@@ -50,5 +68,71 @@ describe("getCurrentUser", () => {
     fetchMock.mockResolvedValue(new Response(null, { status: 401 }));
 
     await expect(getCurrentUser()).resolves.toBeNull();
+  });
+});
+
+describe("getDashboardSummary", () => {
+  beforeEach(() => {
+    fetchMock.mockReset();
+    vi.stubGlobal("fetch", fetchMock);
+  });
+
+  it("loads the summary without caching and forwards the request cookie", async () => {
+    fetchMock.mockResolvedValue(
+      new Response(JSON.stringify(dashboardSummary), {
+        status: 200,
+        headers: { "Content-Type": "application/json" },
+      }),
+    );
+
+    await expect(getDashboardSummary()).resolves.toEqual({
+      status: "success",
+      summary: dashboardSummary,
+    });
+    expect(fetchMock).toHaveBeenCalledWith(
+      "http://127.0.0.1:8080/api/v1/dashboard/summary",
+      {
+        cache: "no-store",
+        headers: { cookie: "rpmp_access=http-only-cookie" },
+      },
+    );
+  });
+
+  it("classifies a 401 response as unauthenticated", async () => {
+    fetchMock.mockResolvedValue(new Response(null, { status: 401 }));
+
+    await expect(getDashboardSummary()).resolves.toEqual({
+      status: "unauthenticated",
+    });
+  });
+
+  it("classifies a 503 response as source unavailable", async () => {
+    fetchMock.mockResolvedValue(
+      new Response(
+        JSON.stringify({
+          code: "source_unavailable",
+          message: "Source unavailable",
+        }),
+        { status: 503, headers: { "Content-Type": "application/json" } },
+      ),
+    );
+
+    await expect(getDashboardSummary()).resolves.toEqual({
+      status: "source_unavailable",
+    });
+  });
+
+  it("uses a safe unexpected result for forbidden and network failures", async () => {
+    fetchMock.mockResolvedValueOnce(new Response(null, { status: 403 }));
+
+    await expect(getDashboardSummary()).resolves.toEqual({
+      status: "unexpected_error",
+    });
+
+    fetchMock.mockRejectedValueOnce(new Error("connection failed"));
+
+    await expect(getDashboardSummary()).resolves.toEqual({
+      status: "unexpected_error",
+    });
   });
 });
