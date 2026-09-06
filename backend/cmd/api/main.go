@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bufio"
 	"context"
 	"errors"
 	"fmt"
@@ -11,6 +12,7 @@ import (
 	"os"
 	"os/signal"
 	"strconv"
+	"strings"
 	"syscall"
 	"time"
 
@@ -33,6 +35,9 @@ type config struct {
 }
 
 func loadConfig() (config, error) {
+	if err := loadDotEnv(".env"); err != nil {
+		return config{}, err
+	}
 	cfg := config{
 		addr:          envOrDefault("RPMP_ADDR", ":8080"),
 		databaseURL:   os.Getenv("RPMP_DATABASE_URL"),
@@ -87,6 +92,51 @@ func envOrDefault(name, fallback string) string {
 		return value
 	}
 	return fallback
+}
+
+func loadDotEnv(path string) error {
+	file, err := os.Open(path)
+	if err != nil {
+		if os.IsNotExist(err) {
+			return nil
+		}
+		return fmt.Errorf("open %s: %w", path, err)
+	}
+	defer file.Close()
+
+	scanner := bufio.NewScanner(file)
+	lineNumber := 0
+	for scanner.Scan() {
+		lineNumber++
+		line := strings.TrimSpace(scanner.Text())
+		if line == "" || strings.HasPrefix(line, "#") {
+			continue
+		}
+		key, value, ok := strings.Cut(line, "=")
+		if !ok {
+			return fmt.Errorf("%s:%d: expected KEY=VALUE", path, lineNumber)
+		}
+		key = strings.TrimSpace(key)
+		if key == "" {
+			return fmt.Errorf("%s:%d: empty key", path, lineNumber)
+		}
+		if os.Getenv(key) != "" {
+			continue
+		}
+		if err := os.Setenv(key, unquoteEnv(strings.TrimSpace(value))); err != nil {
+			return fmt.Errorf("set %s: %w", key, err)
+		}
+	}
+	return scanner.Err()
+}
+
+func unquoteEnv(value string) string {
+	if len(value) >= 2 {
+		if (value[0] == '"' && value[len(value)-1] == '"') || (value[0] == '\'' && value[len(value)-1] == '\'') {
+			return value[1 : len(value)-1]
+		}
+	}
+	return value
 }
 
 func run(ctx context.Context) error {
