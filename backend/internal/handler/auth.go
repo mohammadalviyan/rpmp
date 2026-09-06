@@ -45,7 +45,7 @@ func NewAuth(login LoginUsecase, current CurrentUserUsecase, logout LogoutUsecas
 func (h *Auth) Routes(verifier middleware.TokenVerifier, allowedOrigin string) http.Handler {
 	mux := http.NewServeMux()
 	h.Mount(mux, verifier, allowedOrigin)
-	return middleware.RequestID(mux)
+	return middleware.RequestID(middleware.RequestLog(nil, mux))
 }
 
 func (h *Auth) Mount(mux *http.ServeMux, verifier middleware.TokenVerifier, allowedOrigin string) {

@@ -1,9 +1,12 @@
 package middleware
 
 import (
+	"bytes"
 	"errors"
+	"log/slog"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 
 	"github.com/mohammadalviyan/rpmp/backend/internal/domain"
@@ -99,5 +102,47 @@ func TestResolveAuthenticationIgnoresInvalidToken(t *testing.T) {
 	handler.ServeHTTP(response, request)
 	if response.Code != http.StatusNoContent {
 		t.Fatalf("status = %d", response.Code)
+	}
+}
+
+func TestRequestLogRecordsStatusAndDurationWithoutSecrets(t *testing.T) {
+	var buf bytes.Buffer
+	logger := slog.New(slog.NewTextHandler(&buf, nil))
+	next := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if RequestIDFromContext(r.Context()) == "" {
+			t.Fatal("request id missing")
+		}
+		w.WriteHeader(http.StatusUnauthorized)
+	})
+	handler := RequestID(RequestLog(logger, next))
+
+	password := "super-secret-password"
+	jwt := "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.secret"
+	request := httptest.NewRequest(http.MethodPost, "/api/v1/auth/login?token="+jwt, strings.NewReader(`{"password":"`+password+`"}`))
+	request.Header.Set("Cookie", AccessCookieName+"="+jwt)
+	request.Header.Set("Authorization", "Bearer "+jwt)
+	response := httptest.NewRecorder()
+	handler.ServeHTTP(response, request)
+
+	logLine := buf.String()
+	if response.Code != http.StatusUnauthorized {
+		t.Fatalf("status = %d", response.Code)
+	}
+	if !strings.Contains(logLine, "msg=request") || !strings.Contains(logLine, "method=POST") {
+		t.Fatalf("missing request fields: %s", logLine)
+	}
+	if !strings.Contains(logLine, "path=/api/v1/auth/login") || strings.Contains(logLine, "token=") {
+		t.Fatalf("path leaked query: %s", logLine)
+	}
+	if !strings.Contains(logLine, "status=401") || !strings.Contains(logLine, "dur_ms=") {
+		t.Fatalf("missing status or duration: %s", logLine)
+	}
+	if !strings.Contains(logLine, "request_id=") {
+		t.Fatalf("missing request id: %s", logLine)
+	}
+	for _, secret := range []string{password, jwt, "Cookie", "Set-Cookie", "Authorization"} {
+		if strings.Contains(logLine, secret) {
+			t.Fatalf("log contained %q: %s", secret, logLine)
+		}
 	}
 }

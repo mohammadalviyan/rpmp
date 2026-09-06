@@ -12,5 +12,5 @@ func NewRouter(auth *Auth, dashboard *Dashboard, verifier middleware.TokenVerifi
 	if dashboard != nil {
 		dashboard.Mount(mux, verifier)
 	}
-	return middleware.RequestID(mux)
+	return middleware.RequestID(middleware.RequestLog(nil, mux))
 }

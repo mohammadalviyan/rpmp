@@ -153,6 +153,9 @@ func run(ctx context.Context) error {
 		return fmt.Errorf("connect to database: %w", err)
 	}
 
+	slog.SetDefault(slog.New(slog.NewTextHandler(os.Stdout, nil)))
+	logStartup(slog.Default(), cfg)
+
 	passwords, err := auth.NewPasswords(0)
 	if err != nil {
 		return err
@@ -195,14 +198,25 @@ func run(ctx context.Context) error {
 	select {
 	case err := <-errs:
 		if !errors.Is(err, http.ErrServerClosed) {
+			slog.Error("API listen failed", "error", err)
 			return err
 		}
 	case <-ctx.Done():
+		slog.Info("API shutting down")
 		shutdownCtx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 		defer cancel()
 		return server.Shutdown(shutdownCtx)
 	}
 	return nil
+}
+
+func logStartup(logger *slog.Logger, cfg config) {
+	logger.Info("API listening",
+		"addr", cfg.addr,
+		"origin", cfg.allowedOrigin,
+		"local_http", cfg.localHTTP,
+		"access_ttl", cfg.accessTTL,
+	)
 }
 
 func main() {

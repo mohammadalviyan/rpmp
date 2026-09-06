@@ -1,8 +1,11 @@
 package main
 
 import (
+	"bytes"
+	"log/slog"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 	"time"
 )
@@ -78,5 +81,32 @@ func TestLoadConfigRejectsInsecureNonLocalOrigin(t *testing.T) {
 	t.Setenv("RPMP_LOCAL_HTTP", "true")
 	if _, err := loadConfig(); err == nil {
 		t.Fatal("insecure non-local origin accepted")
+	}
+}
+
+func TestLogStartupOmitsSecrets(t *testing.T) {
+	var buf bytes.Buffer
+	logger := slog.New(slog.NewTextHandler(&buf, nil))
+	secret := "01234567890123456789012345678901"
+	logStartup(logger, config{
+		addr:          ":8080",
+		databaseURL:   "postgres://user:" + secret + "@localhost:5432/rpmp",
+		jwtSecret:     secret,
+		allowedOrigin: "http://localhost:3000",
+		accessTTL:     30 * time.Minute,
+		localHTTP:     true,
+	})
+	line := buf.String()
+	if !strings.Contains(line, `msg="API listening"`) || !strings.Contains(line, "addr=:8080") {
+		t.Fatalf("missing listen fields: %s", line)
+	}
+	if !strings.Contains(line, "origin=http://localhost:3000") || !strings.Contains(line, "local_http=true") {
+		t.Fatalf("missing origin fields: %s", line)
+	}
+	if !strings.Contains(line, "access_ttl=") {
+		t.Fatalf("missing ttl: %s", line)
+	}
+	if strings.Contains(line, secret) || strings.Contains(line, "postgres://") || strings.Contains(line, "RPMP_JWT_SECRET") {
+		t.Fatalf("startup log leaked a secret: %s", line)
 	}
 }
