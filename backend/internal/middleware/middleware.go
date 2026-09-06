@@ -3,7 +3,9 @@ package middleware
 import (
 	"context"
 	"encoding/json"
+	"log/slog"
 	"net/http"
+	"time"
 
 	"github.com/google/uuid"
 	"github.com/mohammadalviyan/rpmp/backend/internal/domain"
@@ -34,6 +36,49 @@ func RequestID(next http.Handler) http.Handler {
 func RequestIDFromContext(ctx context.Context) string {
 	requestID, _ := ctx.Value(requestIDKey).(string)
 	return requestID
+}
+
+type statusWriter struct {
+	http.ResponseWriter
+	status int
+}
+
+func (w *statusWriter) WriteHeader(status int) {
+	w.status = status
+	w.ResponseWriter.WriteHeader(status)
+}
+
+func (w *statusWriter) Write(body []byte) (int, error) {
+	if w.status == 0 {
+		w.status = http.StatusOK
+	}
+	return w.ResponseWriter.Write(body)
+}
+
+func (w *statusWriter) Unwrap() http.ResponseWriter {
+	return w.ResponseWriter
+}
+
+func RequestLog(logger *slog.Logger, next http.Handler) http.Handler {
+	if logger == nil {
+		logger = slog.Default()
+	}
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		started := time.Now()
+		writer := &statusWriter{ResponseWriter: w}
+		next.ServeHTTP(writer, r)
+		status := writer.status
+		if status == 0 {
+			status = http.StatusOK
+		}
+		logger.Info("request",
+			"request_id", RequestIDFromContext(r.Context()),
+			"method", r.Method,
+			"path", r.URL.Path,
+			"status", status,
+			"dur_ms", time.Since(started).Milliseconds(),
+		)
+	})
 }
 
 func RequireAuthentication(verifier TokenVerifier, next http.Handler) http.Handler {
