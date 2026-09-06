@@ -1,0 +1,13 @@
+# RPMP AI orchestration runtime state (per-machine, per-session)
+.data/*
+!.data/SCHEMA.md
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# OS / editor
+.DS_Store
+*.swp
+*.swo

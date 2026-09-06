@@ -1,0 +1,17 @@
+---
+description: RPMP agent orchestration and docs-first boundaries
+alwaysApply: true
+---
+
+# RPMP orchestration
+
+- Read `AGENTS.md` for the layer map and hard invariants.
+- Shared skills live in `.agents/skills/`; `.cursor/skills/` contains symlinks plus existing Cursor-only skills.
+- Auto-use `orchestrate` only for file-changing work. Read-only questions bypass it.
+- For MEDIUM tasks, offer `grill-me` before discovery, especially when an in-scope FR or NFR is TBD.
+- Read only the relevant `docs/PRD.md` FR/persona/NFR IDs. Do not paste the full PRD into prompts.
+- Load `gateway-backend` or `gateway-frontend` before implementation.
+- Docs-first setup is complete. The repo remains documentation-only until a human approves `docs/plans/VERTICAL_SLICE_2026-09-06.md`; do not create `backend/` before that approval.
+- Plan approval permits backend Slice 1 only. Do not create `frontend/` until a human selects an unblocked frontend backlog card.
+- Code work must cite exactly one backlog ID. One agent session executes one ID, stops, and never auto-picks the next card.
+- Do not invent Orchestrator vendor fields in the frontend API contract or UI.
