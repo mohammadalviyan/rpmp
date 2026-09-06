@@ -25,3 +25,12 @@ func TestRoleCanRead(t *testing.T) {
 		t.Fatal("unknown role can read")
 	}
 }
+
+func TestExecutionStatusFailureGrouping(t *testing.T) {
+	if !ExecutionFailure.IsFailure() || !ExecutionException.IsFailure() {
+		t.Fatal("failure grouping missed a stub failure status")
+	}
+	if ExecutionSuccess.IsFailure() {
+		t.Fatal("success counted as failure")
+	}
+}
