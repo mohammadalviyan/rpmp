@@ -37,7 +37,7 @@ func TestDashboardSummaryContractForViewerAndAdmin(t *testing.T) {
 	}
 	router := NewRouter(
 		NewAuth(loginStub{}, currentStub{}, &logoutStub{}, CookieConfig{TTL: 30 * time.Minute, Secure: true}),
-		NewDashboard(summary),
+		NewDashboard(summary, nil, nil),
 		tokens,
 		"https://rpmp.example",
 	)
@@ -78,7 +78,7 @@ func TestDashboardSummaryContractForViewerAndAdmin(t *testing.T) {
 func TestDashboardSummaryRejectsUnauthenticatedAndInvalidPeriod(t *testing.T) {
 	router := NewRouter(
 		NewAuth(loginStub{}, currentStub{}, &logoutStub{}, CookieConfig{TTL: 30 * time.Minute}),
-		NewDashboard(dashboardStub{}),
+		NewDashboard(dashboardStub{}, nil, nil),
 		verifierStub{},
 		"https://rpmp.example",
 	)
@@ -92,7 +92,7 @@ func TestDashboardSummaryRejectsUnauthenticatedAndInvalidPeriod(t *testing.T) {
 
 	protected := NewRouter(
 		NewAuth(loginStub{}, currentStub{}, &logoutStub{}, CookieConfig{TTL: 30 * time.Minute}),
-		NewDashboard(dashboardStub{err: domain.NewError(domain.KindInvalidPeriod, nil)}),
+		NewDashboard(dashboardStub{err: domain.NewError(domain.KindInvalidPeriod, nil)}, nil, nil),
 		verifierStub{principal: domain.Principal{UserID: "user-1", Role: domain.RoleViewer}},
 		"https://rpmp.example",
 	)
@@ -109,7 +109,7 @@ func TestDashboardSummaryRejectsUnauthenticatedAndInvalidPeriod(t *testing.T) {
 func TestDashboardSummaryHidesSourceFailureDetails(t *testing.T) {
 	router := NewRouter(
 		NewAuth(loginStub{}, currentStub{}, &logoutStub{}, CookieConfig{TTL: 30 * time.Minute}),
-		NewDashboard(dashboardStub{err: domain.NewError(domain.KindSourceUnavailable, errors.New("JobState timeout"))}),
+		NewDashboard(dashboardStub{err: domain.NewError(domain.KindSourceUnavailable, errors.New("JobState timeout"))}, nil, nil),
 		verifierStub{principal: domain.Principal{UserID: "user-1", Role: domain.RoleViewer}},
 		"https://rpmp.example",
 	)
@@ -140,7 +140,7 @@ func TestDashboardZeroVolumeEncodesNullSuccessRate(t *testing.T) {
 				LastSuccessfulRefreshAt: time.Date(2026, 9, 6, 0, 0, 0, 0, time.UTC),
 			},
 			KPIs: domain.KPIs{TotalUseCases: 12, ActiveUseCases: 9},
-		}}),
+		}}, nil, nil),
 		verifierStub{principal: domain.Principal{UserID: "user-1", Role: domain.RoleViewer}},
 		"https://rpmp.example",
 	)
@@ -150,5 +150,138 @@ func TestDashboardZeroVolumeEncodesNullSuccessRate(t *testing.T) {
 	router.ServeHTTP(response, request)
 	if !strings.Contains(response.Body.String(), `"success_rate":null`) {
 		t.Fatalf("body = %s", response.Body.String())
+	}
+}
+
+func TestDashboardChartContractsForViewerAndAdmin(t *testing.T) {
+	source, err := stub.New()
+	if err != nil {
+		t.Fatal(err)
+	}
+	tokens, err := auth.NewTokens("rpmp", "01234567890123456789012345678901", 30*time.Minute)
+	if err != nil {
+		t.Fatal(err)
+	}
+	router := NewRouter(
+		NewAuth(loginStub{}, currentStub{}, &logoutStub{}, CookieConfig{TTL: 30 * time.Minute, Secure: true}),
+		NewDashboard(
+			usecase.NewDashboardSummary(source),
+			usecase.NewDashboardExecutionTrend(source),
+			usecase.NewDashboardErrors(source),
+		),
+		tokens,
+		"https://rpmp.example",
+	)
+
+	tests := []struct {
+		path string
+		want []string
+	}{
+		{
+			path: "/api/v1/dashboard/execution-trend?from=2026-08-07T00:00:00Z&to=2026-09-06T00:00:00Z",
+			want: []string{
+				`"period":{"from":"2026-08-07T00:00:00Z","timezone":"UTC","to":"2026-09-06T00:00:00Z"}`,
+				`"bucket":"2026-08-01T00:00:00Z","failure":6,"label":"Aug","success":94`,
+				`"bucket":"2026-09-01T00:00:00Z","failure":0,"label":"Sep","success":0`,
+			},
+		},
+		{
+			path: "/api/v1/dashboard/errors?from=2026-08-07T00:00:00Z&to=2026-09-06T00:00:00Z",
+			want: []string{
+				`"period":{"from":"2026-08-07T00:00:00Z","timezone":"UTC","to":"2026-09-06T00:00:00Z"}`,
+				`"code":"faulted","count":4,"label":"Faulted"`,
+				`"code":"stopped","count":2,"label":"Stopped"`,
+			},
+		},
+	}
+	for _, role := range []domain.Role{domain.RoleViewer, domain.RoleAdmin} {
+		token, err := tokens.Issue("user-1", role)
+		if err != nil {
+			t.Fatal(err)
+		}
+		for _, test := range tests {
+			request := httptest.NewRequest(http.MethodGet, test.path, nil)
+			request.AddCookie(&http.Cookie{Name: "rpmp_access", Value: token})
+			response := httptest.NewRecorder()
+			router.ServeHTTP(response, request)
+			if response.Code != http.StatusOK {
+				t.Fatalf("role %s path %s status = %d %s", role, test.path, response.Code, response.Body.String())
+			}
+			body := response.Body.String()
+			for _, want := range test.want {
+				if !strings.Contains(body, want) {
+					t.Fatalf("role %s path %s missing %s in %s", role, test.path, want, body)
+				}
+			}
+			if strings.Contains(body, "JobState") || strings.Contains(body, "ReleaseKey") {
+				t.Fatalf("vendor field leaked: %s", body)
+			}
+		}
+	}
+}
+
+func TestDashboardChartRoutesRequireCookieAndValidatePeriod(t *testing.T) {
+	source, err := stub.New()
+	if err != nil {
+		t.Fatal(err)
+	}
+	dashboard := NewDashboard(
+		usecase.NewDashboardSummary(source),
+		usecase.NewDashboardExecutionTrend(source),
+		usecase.NewDashboardErrors(source),
+	)
+	router := NewRouter(
+		NewAuth(loginStub{}, currentStub{}, &logoutStub{}, CookieConfig{TTL: 30 * time.Minute}),
+		dashboard,
+		verifierStub{principal: domain.Principal{UserID: "user-1", Role: domain.RoleViewer}},
+		"https://rpmp.example",
+	)
+	for _, path := range []string{
+		"/api/v1/dashboard/execution-trend",
+		"/api/v1/dashboard/errors",
+	} {
+		request := httptest.NewRequest(http.MethodGet, path, nil)
+		response := httptest.NewRecorder()
+		router.ServeHTTP(response, request)
+		if response.Code != http.StatusUnauthorized || !strings.Contains(response.Body.String(), `"code":"unauthenticated"`) {
+			t.Fatalf("path %s unauthenticated = %d %s", path, response.Code, response.Body.String())
+		}
+
+		request = httptest.NewRequest(http.MethodGet, path+"?from=2026-08-07T00:00:00Z", nil)
+		request.AddCookie(&http.Cookie{Name: "rpmp_access", Value: "valid"})
+		response = httptest.NewRecorder()
+		router.ServeHTTP(response, request)
+		if response.Code != http.StatusBadRequest || !strings.Contains(response.Body.String(), `"code":"invalid_period"`) {
+			t.Fatalf("path %s invalid period = %d %s", path, response.Code, response.Body.String())
+		}
+	}
+}
+
+func TestDashboardChartRoutesHideSourceFailureDetails(t *testing.T) {
+	source := stub.NewUnavailable()
+	router := NewRouter(
+		NewAuth(loginStub{}, currentStub{}, &logoutStub{}, CookieConfig{TTL: 30 * time.Minute}),
+		NewDashboard(
+			usecase.NewDashboardSummary(source),
+			usecase.NewDashboardExecutionTrend(source),
+			usecase.NewDashboardErrors(source),
+		),
+		verifierStub{principal: domain.Principal{UserID: "user-1", Role: domain.RoleViewer}},
+		"https://rpmp.example",
+	)
+	for _, path := range []string{
+		"/api/v1/dashboard/execution-trend",
+		"/api/v1/dashboard/errors",
+	} {
+		request := httptest.NewRequest(http.MethodGet, path, nil)
+		request.AddCookie(&http.Cookie{Name: "rpmp_access", Value: "valid"})
+		response := httptest.NewRecorder()
+		router.ServeHTTP(response, request)
+		body := response.Body.String()
+		if response.Code != http.StatusServiceUnavailable ||
+			!strings.Contains(body, `"code":"source_unavailable"`) ||
+			strings.Contains(body, "vendor") || strings.Contains(body, "timed out") {
+			t.Fatalf("path %s source failure = %d %s", path, response.Code, body)
+		}
 	}
 }

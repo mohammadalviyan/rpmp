@@ -149,3 +149,112 @@ func assertFrozenKPIs(t *testing.T, summary domain.DashboardSummary) {
 		t.Fatalf("kpis = %#v", summary.KPIs)
 	}
 }
+
+func TestDashboardExecutionTrendFromStubFixtures(t *testing.T) {
+	source, err := stub.New()
+	if err != nil {
+		t.Fatal(err)
+	}
+	trend, err := NewDashboardExecutionTrend(source).Execute(context.Background(), DashboardInput{
+		Principal: domain.Principal{UserID: "viewer-1", Role: domain.RoleViewer},
+		From:      "2026-08-07T00:00:00Z",
+		To:        "2026-09-06T00:00:00Z",
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(trend.Points) != 2 {
+		t.Fatalf("points = %#v", trend.Points)
+	}
+	august := trend.Points[0]
+	if !august.Bucket.Equal(time.Date(2026, 8, 1, 0, 0, 0, 0, time.UTC)) ||
+		august.Label != "Aug" || august.Success != 94 || august.Failure != 6 {
+		t.Fatalf("august point = %#v", august)
+	}
+	september := trend.Points[1]
+	if !september.Bucket.Equal(time.Date(2026, 9, 1, 0, 0, 0, 0, time.UTC)) ||
+		september.Label != "Sep" || september.Success != 0 || september.Failure != 0 {
+		t.Fatalf("september point = %#v", september)
+	}
+}
+
+func TestDashboardErrorsFromStubFixtures(t *testing.T) {
+	source, err := stub.New()
+	if err != nil {
+		t.Fatal(err)
+	}
+	result, err := NewDashboardErrors(source).Execute(context.Background(), DashboardInput{
+		Principal: domain.Principal{UserID: "admin-1", Role: domain.RoleAdmin},
+		From:      "2026-08-07T00:00:00Z",
+		To:        "2026-09-06T00:00:00Z",
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(result.Groups) != 2 ||
+		result.Groups[0] != (domain.ErrorGroup{Code: "faulted", Label: "Faulted", Count: 4}) ||
+		result.Groups[1] != (domain.ErrorGroup{Code: "stopped", Label: "Stopped", Count: 2}) {
+		t.Fatalf("groups = %#v", result.Groups)
+	}
+}
+
+func TestDashboardChartPeriodRules(t *testing.T) {
+	now := time.Date(2026, 9, 6, 0, 0, 0, 0, time.UTC)
+	trend := NewDashboardExecutionTrend(fakeSource{})
+	trend.now = func() time.Time { return now }
+	errorsUsecase := NewDashboardErrors(fakeSource{})
+	errorsUsecase.now = func() time.Time { return now }
+
+	defaultTrend, err := trend.Execute(context.Background(), DashboardInput{
+		Principal: domain.Principal{Role: domain.RoleViewer},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	defaultErrors, err := errorsUsecase.Execute(context.Background(), DashboardInput{
+		Principal: domain.Principal{Role: domain.RoleViewer},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	wantFrom := now.AddDate(0, 0, -30)
+	if !defaultTrend.Period.From.Equal(wantFrom) || !defaultTrend.Period.To.Equal(now) ||
+		!defaultErrors.Period.From.Equal(wantFrom) || !defaultErrors.Period.To.Equal(now) {
+		t.Fatalf("default periods = %#v %#v", defaultTrend.Period, defaultErrors.Period)
+	}
+
+	invalidInputs := []DashboardInput{
+		{Principal: domain.Principal{Role: domain.RoleViewer}, From: "2026-08-07T00:00:00Z"},
+		{Principal: domain.Principal{Role: domain.RoleViewer}, To: "2026-09-06T00:00:00Z"},
+		{Principal: domain.Principal{Role: domain.RoleViewer}, From: "invalid", To: "2026-09-06T00:00:00Z"},
+		{Principal: domain.Principal{Role: domain.RoleViewer}, From: "2026-09-06T00:00:00Z", To: "2026-09-06T00:00:00Z"},
+	}
+	for _, input := range invalidInputs {
+		if _, err := trend.Execute(context.Background(), input); domain.ErrorKindOf(err) != domain.KindInvalidPeriod {
+			t.Fatalf("trend input %#v err = %v", input, err)
+		}
+		if _, err := errorsUsecase.Execute(context.Background(), input); domain.ErrorKindOf(err) != domain.KindInvalidPeriod {
+			t.Fatalf("errors input %#v err = %v", input, err)
+		}
+	}
+}
+
+func TestDashboardChartsForbiddenAndSourceUnavailable(t *testing.T) {
+	source := fakeSource{err: domain.NewError(domain.KindSourceUnavailable, errors.New("adapter details"))}
+	trend := NewDashboardExecutionTrend(source)
+	errorsUsecase := NewDashboardErrors(source)
+	forbidden := DashboardInput{Principal: domain.Principal{Role: domain.Role("operator")}}
+	if _, err := trend.Execute(context.Background(), forbidden); domain.ErrorKindOf(err) != domain.KindForbidden {
+		t.Fatalf("trend forbidden err = %v", err)
+	}
+	if _, err := errorsUsecase.Execute(context.Background(), forbidden); domain.ErrorKindOf(err) != domain.KindForbidden {
+		t.Fatalf("errors forbidden err = %v", err)
+	}
+	viewer := DashboardInput{Principal: domain.Principal{Role: domain.RoleViewer}}
+	if _, err := trend.Execute(context.Background(), viewer); domain.ErrorKindOf(err) != domain.KindSourceUnavailable {
+		t.Fatalf("trend source err = %v", err)
+	}
+	if _, err := errorsUsecase.Execute(context.Background(), viewer); domain.ErrorKindOf(err) != domain.KindSourceUnavailable {
+		t.Fatalf("errors source err = %v", err)
+	}
+}

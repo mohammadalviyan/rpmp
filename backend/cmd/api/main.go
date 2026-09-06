@@ -177,11 +177,13 @@ func run(ctx context.Context) error {
 	if err != nil {
 		return fmt.Errorf("load source fixtures: %w", err)
 	}
-	dashboard := usecase.NewDashboardSummary(source)
+	dashboardSummary := usecase.NewDashboardSummary(source)
+	dashboardExecutionTrend := usecase.NewDashboardExecutionTrend(source)
+	dashboardErrors := usecase.NewDashboardErrors(source)
 	authHandler := handler.NewAuth(login, current, logout, handler.CookieConfig{
 		TTL: cfg.accessTTL, Secure: !cfg.localHTTP,
 	})
-	dashboardHandler := handler.NewDashboard(dashboard)
+	dashboardHandler := handler.NewDashboard(dashboardSummary, dashboardExecutionTrend, dashboardErrors)
 
 	server := &http.Server{
 		Addr:              cfg.addr,

@@ -107,6 +107,29 @@ type DashboardSummary struct {
 	KPIs      KPIs
 }
 
+type ExecutionTrendPoint struct {
+	Bucket  time.Time
+	Label   string
+	Success int
+	Failure int
+}
+
+type ExecutionTrend struct {
+	Period Period
+	Points []ExecutionTrendPoint
+}
+
+type ErrorGroup struct {
+	Code  string
+	Label string
+	Count int
+}
+
+type DashboardErrors struct {
+	Period Period
+	Groups []ErrorGroup
+}
+
 type ErrorKind string
 
 const (
