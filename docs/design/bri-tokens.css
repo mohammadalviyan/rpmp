@@ -1,0 +1,107 @@
+/* BRI palette for RPMP. Source of truth for FE visual cards.
+   Map these into frontend/app/globals.css :root and shadcn semantic tokens.
+   Do not invent extra brand colors. */
+
+:root {
+  /* Black */
+  --bri-black-opacity-10: #181c211a;
+  --bri-black-opacity-30: #181c214d;
+  --bri-black-opacity-50: #181c2180;
+  --bri-black-100: #f5f7fb;
+  --bri-black-200: #e9eef6;
+  --bri-black-300: #e0e5eb;
+  --bri-black-400: #b3becc;
+  --bri-black-500: #a3b1c1;
+  --bri-black-600: #7b90a6;
+  --bri-black-700: #465668;
+  --bri-black-main: #181c21;
+
+  /* Primary - Cakrawala */
+  --bri-primary-cakrawala-100: #c1d9f6;
+  --bri-primary-cakrawala-300: #83b2ee;
+  --bri-primary-cakrawala-400: #5999e8;
+  --bri-primary-cakrawala-main: #307fe2;
+  --bri-primary-cakrawala-600: #2666b5;
+  --bri-primary-cakrawala-700: #1d4c88;
+  --bri-primary-cakrawala-800: #0e2644;
+  --bri-primary-cakrawala-900: #0a192d;
+
+  /* Secondary - Mentari */
+  --bri-secondary-mentari-100: #e5f3fb;
+  --bri-secondary-mentari-300: #e5f3fb;
+  --bri-secondary-mentari-400: #8cd0ee;
+  --bri-secondary-mentari-main: #71c5e8;
+  --bri-secondary-mentari-600: #5799b5;
+  --bri-secondary-mentari-700: #132831;
+  --bri-secondary-mentari-900: #132831;
+
+  /* White */
+  --bri-white-main: #ffffff;
+  --bri-white-opacity-10: #ffffff1a;
+  --bri-white-opacity-30: #ffffff4d;
+  --bri-white-opacity-50: #ffffff80;
+  --bri-white-transparent: #ffffff00;
+
+  /* Blue Neon */
+  --bri-blue-neon-100: #f0fcff;
+  --bri-blue-neon-300: #cdf5fe;
+  --bri-blue-neon-400: #9bebfd;
+  --bri-blue-neon-main: #14d1fb;
+  --bri-blue-neon-600: #04b1d8;
+  --bri-blue-neon-700: #0388a5;
+  --bri-blue-neon-900: #025f73;
+
+  /* Blue Sky */
+  --bri-blue-sky-100: #ebf8ff;
+  --bri-blue-sky-300: #bde7ff;
+  --bri-blue-sky-400: #80d1ff;
+  --bri-blue-sky-main: #15a9f4;
+  --bri-blue-sky-600: #0a8bcd;
+  --bri-blue-sky-700: #076a9c;
+  --bri-blue-sky-900: #032436;
+
+  /* Green */
+  --bri-green-100: #eefbf4;
+  --bri-green-300: #c9f3db;
+  --bri-green-400: #a1ddbb;
+  --bri-green-main: #27ae60;
+  --bri-green-600: #1e8549;
+  --bri-green-700: #145c33;
+  --bri-green-900: #0a2e19;
+
+  /* Red */
+  --bri-red-100: #fdeded;
+  --bri-red-300: #f8c4c4;
+  --bri-red-400: #f28d8d;
+  --bri-red-main: #eb4040;
+  --bri-red-600: #da1a1a;
+  --bri-red-700: #ad1414;
+  --bri-red-900: #320606;
+
+  /* Yellow */
+  --bri-yellow-100: #fff9eb;
+  --bri-yellow-300: #ffebbd;
+  --bri-yellow-400: #ffd980;
+  --bri-yellow-main: #ffbe26;
+  --bri-yellow-600: #f0a800;
+  --bri-yellow-700: #bd8400;
+  --bri-yellow-900: #382700;
+
+  /* BRIVA */
+  --bri-briva-100: #effafa;
+  --bri-briva-300: #ccf0f0;
+  --bri-briva-400: #9ce2e2;
+  --bri-briva-main: #58cfcf;
+  --bri-briva-600: #37bebe;
+  --bri-briva-700: #2b9696;
+  --bri-briva-900: #0d2c2c;
+
+  /* BRIZZI */
+  --bri-brizzi-100: #ebfff8;
+  --bri-brizzi-300: #befde8;
+  --bri-brizzi-400: #83fbd3;
+  --bri-brizzi-main: #05d78f;
+  --bri-brizzi-600: #04a46d;
+  --bri-brizzi-700: #03734d;
+  --bri-brizzi-900: #013724;
+}
