@@ -20,3 +20,22 @@ export type ApiError = {
   code: string;
   message: string;
 };
+
+export type DashboardSummary = {
+  period: {
+    from: string;
+    to: string;
+    timezone: string;
+  };
+  freshness: {
+    status: string;
+    last_successful_refresh_at: string;
+  };
+  kpis: {
+    total_use_cases: number;
+    active_use_cases: number;
+    execution_volume: number;
+    success_rate: number | null;
+    failed_executions: number;
+  };
+};
