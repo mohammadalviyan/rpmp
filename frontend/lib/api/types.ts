@@ -22,11 +22,7 @@ export type ApiError = {
 };
 
 export type DashboardSummary = {
-  period: {
-    from: string;
-    to: string;
-    timezone: string;
-  };
+  period: DashboardPeriod;
   freshness: {
     status: string;
     last_successful_refresh_at: string;
@@ -38,4 +34,29 @@ export type DashboardSummary = {
     success_rate: number | null;
     failed_executions: number;
   };
+};
+
+export type DashboardPeriod = {
+  from: string;
+  to: string;
+  timezone: string;
+};
+
+export type ExecutionTrend = {
+  period: DashboardPeriod;
+  points: Array<{
+    bucket: string;
+    label: string;
+    success: number;
+    failure: number;
+  }>;
+};
+
+export type DashboardErrors = {
+  period: DashboardPeriod;
+  groups: Array<{
+    code: string;
+    label: string;
+    count: number;
+  }>;
 };
