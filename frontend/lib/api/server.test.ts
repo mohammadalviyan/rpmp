@@ -6,7 +6,8 @@ vi.mock("next/headers", () => ({
   }),
 }));
 
-const { getCurrentUser, getDashboardSummary } = await import("@/lib/api/server");
+const { getCurrentUser, getDashboardOverview, getDashboardSummary } =
+  await import("@/lib/api/server");
 
 const fetchMock = vi.fn();
 const dashboardSummary = {
@@ -133,6 +134,88 @@ describe("getDashboardSummary", () => {
 
     await expect(getDashboardSummary()).resolves.toEqual({
       status: "unexpected_error",
+    });
+  });
+});
+
+describe("getDashboardOverview", () => {
+  beforeEach(() => {
+    fetchMock.mockReset();
+    vi.stubGlobal("fetch", fetchMock);
+  });
+
+  it("loads all dashboard resources independently with no-store cookie forwarding", async () => {
+    const trend = {
+      period: dashboardSummary.period,
+      points: [
+        {
+          bucket: "2026-08-01T00:00:00Z",
+          label: "Aug",
+          success: 94,
+          failure: 6,
+        },
+      ],
+    };
+    const errors = {
+      period: dashboardSummary.period,
+      groups: [{ code: "faulted", label: "Faulted", count: 4 }],
+    };
+
+    fetchMock
+      .mockResolvedValueOnce(
+        new Response(JSON.stringify(dashboardSummary), { status: 200 }),
+      )
+      .mockResolvedValueOnce(
+        new Response(JSON.stringify(trend), { status: 200 }),
+      )
+      .mockResolvedValueOnce(
+        new Response(JSON.stringify(errors), { status: 200 }),
+      );
+
+    await expect(getDashboardOverview()).resolves.toEqual({
+      status: "success",
+      summary: { status: "success", data: dashboardSummary },
+      trend: { status: "success", data: trend },
+      errors: { status: "success", data: errors },
+    });
+    expect(fetchMock).toHaveBeenCalledTimes(3);
+    for (const path of [
+      "summary",
+      "execution-trend",
+      "errors",
+    ]) {
+      expect(fetchMock).toHaveBeenCalledWith(
+        `http://127.0.0.1:8080/api/v1/dashboard/${path}`,
+        {
+          cache: "no-store",
+          headers: { cookie: "rpmp_access=http-only-cookie" },
+        },
+      );
+    }
+  });
+
+  it("redirects the whole read on 401 but keeps 503 states independent", async () => {
+    fetchMock
+      .mockResolvedValueOnce(new Response(null, { status: 200 }))
+      .mockResolvedValueOnce(new Response(null, { status: 401 }))
+      .mockResolvedValueOnce(new Response(null, { status: 503 }));
+
+    await expect(getDashboardOverview()).resolves.toEqual({
+      status: "unauthenticated",
+    });
+
+    fetchMock
+      .mockResolvedValueOnce(
+        new Response(JSON.stringify(dashboardSummary), { status: 200 }),
+      )
+      .mockResolvedValueOnce(new Response(null, { status: 503 }))
+      .mockResolvedValueOnce(new Response("not-json", { status: 200 }));
+
+    await expect(getDashboardOverview()).resolves.toEqual({
+      status: "success",
+      summary: { status: "success", data: dashboardSummary },
+      trend: { status: "source_unavailable" },
+      errors: { status: "unexpected_error" },
     });
   });
 });

@@ -48,7 +48,7 @@ export function DashboardSummary({
 
   return (
     <>
-      <div className="mt-6 flex flex-col gap-1 text-sm text-muted-foreground">
+      <div className="flex flex-col gap-1 text-sm text-muted-foreground sm:flex-row sm:items-center sm:justify-between">
         <p>
           Period: {formatUtcDateTime(summary.period.from)} to{" "}
           {formatUtcDateTime(summary.period.to)} ({summary.period.timezone})
@@ -62,13 +62,13 @@ export function DashboardSummary({
 
       <section
         aria-label="Dashboard key performance indicators"
-        className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-5"
+        className="mt-5 grid gap-4 sm:grid-cols-2 xl:grid-cols-5"
       >
         {kpis.map((kpi) => (
           <article
             key={kpi.id}
             aria-labelledby={`${kpi.id}-label`}
-            className="rounded-xl border bg-card p-5 text-card-foreground shadow-sm"
+            className="rounded-2xl border bg-card p-5 text-card-foreground shadow-[0_8px_24px_var(--bri-black-opacity-10)]"
           >
             <h2
               id={`${kpi.id}-label`}
@@ -79,6 +79,7 @@ export function DashboardSummary({
             <p className="mt-3 text-3xl font-semibold tabular-nums">
               {kpi.value}
             </p>
+            <div className="mt-5 h-1 w-10 rounded-full bg-primary" />
           </article>
         ))}
       </section>
