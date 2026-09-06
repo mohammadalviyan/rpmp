@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import { render, screen } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import LoginPage from "@/app/(auth)/login/page";
@@ -10,6 +11,7 @@ const redirect = vi.fn();
 
 vi.mock("next/navigation", () => ({
   redirect: (destination: string) => redirect(destination),
+  useRouter: () => ({ replace: vi.fn(), refresh: vi.fn() }),
 }));
 
 vi.mock("@/lib/api/server", () => ({
@@ -51,5 +53,19 @@ describe("auth route gating", () => {
 
     await expect(LoginPage()).rejects.toThrow("NEXT_REDIRECT");
     expect(redirect).toHaveBeenCalledWith("/dashboard");
+  });
+
+  it("keeps the RPMP sign-in hierarchy for an unauthenticated visitor", async () => {
+    mockGetCurrentUser.mockResolvedValue(null);
+
+    render(await LoginPage());
+
+    expect(screen.getByText("RPMP")).toBeVisible();
+    expect(screen.getByRole("heading", { name: "Sign in" })).toBeVisible();
+    expect(
+      screen.getByText("Use your Employee ID and password to continue."),
+    ).toBeVisible();
+    expect(screen.getByRole("button", { name: "Sign in" })).toBeVisible();
+    expect(redirect).not.toHaveBeenCalled();
   });
 });
