@@ -97,4 +97,12 @@ go test -race ./...
 go vet ./...
 ```
 
-Repository integration tests run when `DATABASE_URL` points to a disposable PostgreSQL database. They skip when it is unset. No frontend commands exist yet.
+Repository integration tests run when `DATABASE_URL` points to a disposable PostgreSQL database. They skip when it is unset.
+
+Run from `frontend/`:
+
+```sh
+npm run typecheck
+npm run lint
+npm test
+```
