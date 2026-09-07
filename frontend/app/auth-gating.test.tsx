@@ -13,6 +13,7 @@ const redirect = vi.fn();
 vi.mock("next/navigation", () => ({
   redirect: (destination: string) => redirect(destination),
   useRouter: () => ({ replace: vi.fn(), refresh: vi.fn() }),
+  usePathname: () => "/dashboard",
 }));
 
 vi.mock("@/lib/api/server", () => ({
@@ -75,26 +76,30 @@ describe("auth route gating", () => {
       expect(screen.getByText(group)).toBeVisible();
     }
 
-    const placeholders = [
-      "Use Cases",
-      "Generate Report",
-      "Report History",
-      "Email Management",
-      "Email History",
-      "General Settings",
-      "User Management",
-      "Email Configuration",
-    ];
-    for (const label of placeholders) {
-      expect(screen.getByRole("button", { name: label })).toBeDisabled();
+    const links = {
+      "Use Cases": "/use-cases",
+      "Generate Report": "/generate-report",
+      "Report History": "/report-history",
+      "Email Management": "/email-management",
+      "Email History": "/email-history",
+      "General Settings": "/settings/general",
+      "User Management": "/settings/users",
+      "Email Configuration": "/settings/email",
+    };
+    for (const [label, href] of Object.entries(links)) {
+      expect(screen.getByRole("link", { name: label })).toHaveAttribute(
+        "href",
+        href,
+      );
     }
-    expect(screen.getAllByRole("link")).toHaveLength(2);
+    expect(screen.getAllByRole("link")).toHaveLength(10);
     expect(screen.getByText("Example Viewer")).toBeVisible();
     expect(screen.getByText("viewer")).toBeVisible();
+    expect(screen.getByRole("status")).toHaveTextContent("Demo data");
     expect(screen.getByRole("button", { name: "Log out" })).toBeVisible();
   });
 
-  it("opens and closes the mobile navigation drawer", async () => {
+  it("collapses and expands the sidebar", async () => {
     mockGetCurrentUser.mockResolvedValue(viewer);
     const user = userEvent.setup();
 
@@ -104,21 +109,15 @@ describe("auth route gating", () => {
       }),
     );
 
-    const trigger = screen.getByRole("button", { name: "Open menu" });
-    expect(trigger).toHaveAttribute("aria-expanded", "false");
-    expect(trigger).toHaveAttribute("aria-controls", "app-sidebar");
+    const trigger = screen.getByRole("button", { name: "Toggle sidebar" });
+    expect(trigger).toHaveAttribute("aria-expanded", "true");
 
     await user.click(trigger);
+    expect(trigger).toHaveAttribute("aria-expanded", "false");
+    expect(document.cookie).toContain("sidebar_state=false");
 
-    expect(
-      screen.getByRole("button", { name: "Close menu", expanded: true }),
-    ).toBeVisible();
-
-    await user.keyboard("{Escape}");
-
-    expect(
-      screen.getByRole("button", { name: "Open menu" }),
-    ).toHaveAttribute("aria-expanded", "false");
+    await user.click(trigger);
+    expect(trigger).toHaveAttribute("aria-expanded", "true");
   });
 
   it("keeps the RPMP sign-in hierarchy for an unauthenticated visitor", async () => {
