@@ -4,7 +4,7 @@ Same map as `AGENTS.md`. Canonical copy lives in both files so Claude Code does 
 
 RPA Performance & Monitoring Platform (RPMP). Internal information layer over Orchestrator / RPA operational data. MVP: Dashboard + Use Cases. Not a replacement for Orchestrator.
 
-Docs-first setup is complete. A human approved `docs/plans/VERTICAL_SLICE_2026-09-06.md` on 2026-09-06. That approval permits backend Slice 1 only, one human-selected backlog card at a time. `frontend/` remains deferred to later backlog cards. Suggested stack (PRD §34, not locked beyond implemented slices): Next.js/React frontend, Go HTTP API, PostgreSQL, internal auth designed SSO-ready. No `packages/shared` in v1.
+Docs-first setup is complete. A human approved `docs/plans/VERTICAL_SLICE_2026-09-06.md` on 2026-09-06. Backend exists through BE-04 and frontend through FE-04. Further work is one human-selected backlog card at a time. Suggested stack (PRD §34, not locked beyond implemented slices): Next.js/React frontend, Go HTTP API, PostgreSQL, internal auth designed SSO-ready. No `packages/shared` in v1.
 
 ## Tech stack (proposed)
 
@@ -16,7 +16,7 @@ Docs-first setup is complete. A human approved `docs/plans/VERTICAL_SLICE_2026-0
 
 ## Project structure
 
-The backend scaffold exists. The frontend layout remains planned.
+The backend and frontend scaffolds exist.
 
 **Backend** (`backend/`): request flow `middleware (authn) → handler → usecase → repo` and/or `adapter`.
 
@@ -61,7 +61,7 @@ Shared knowledge lives in `.agents/skills/`. Claude Code and Cursor symlink into
 - **`orchestrate`**: short protocol (phases 1, 2, 3 intent, 4 gateway, 8 implement, 13 test, 16 done). Auto-invoke for file-changing work only. Not for read-only questions.
 - **Gateways**: `gateway-backend` and `gateway-frontend`. No shared package lane.
 - **Agents (when source folders exist)**: `backend-developer`, `frontend-developer`, `go-reviewer`, `frontend-reviewer`. Thin, one-shot, no further spawn.
-- **Approval gate:** backend Slice 1 may start only after a human approves `docs/plans/VERTICAL_SLICE_2026-09-06.md`. Frontend work remains deferred to its cards.
+- **Approval gate:** Slice 1 is approved. `backend/` and `frontend/` exist through BE-04 / FE-04. Execute only the human-selected backlog card.
 - **Backlog sessions:** code work cites exactly one backlog ID. One agent session executes one ID, stops, and never auto-picks the next card.
 - **MEDIUM+**: offer `grill-me` before discovery. Load the matching gateway before implementation.
 - **Hooks**: deferred until folders and agents are in use. `manifest-writer` deferred. See ADR_AI_ORCHESTRATION.
@@ -75,7 +75,7 @@ Shared knowledge lives in `.agents/skills/`. Claude Code and Cursor symlink into
 5. **Auth is internal first, SSO-ready.** No secrets, tokens, or service-account credentials in the frontend.
 6. **Do not hand-edit generated files** (sqlc output, Next generated types, lockfile noise).
 7. **Agent layout:** product docs in `docs/`; skills in `.agents/skills/`. Point to PRD sections; do not dump the full PRD into prompts.
-8. **Do not scaffold `backend/` before Slice 1 plan approval.** Approval permits only the selected backend backlog card. Do not create `frontend/` until a human selects an unblocked frontend card.
+8. **One backlog card per session.** Do not expand `backend/` on a frontend card or `frontend/` on a backend card. Do not invent or auto-pick the next card.
 9. **RPMP is an information layer**, not a robot controller. No start/stop jobs, no Orchestrator replacement features in MVP.
 10. **Snake_case DB columns** in SQL and repo structs that map to tables. API JSON for the UI may use the contract in `docs/PRD.md` once it is locked.
 
