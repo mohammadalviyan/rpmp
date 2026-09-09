@@ -1,134 +1,83 @@
 import { render, screen } from "@testing-library/react";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 
 import DashboardPage from "@/app/(protected)/dashboard/page";
-import { getDashboardOverview } from "@/lib/api/server";
+import { getRpaDataProvider } from "@/lib/data/provider";
+import type { RpaDataProvider } from "@/lib/data/types";
 
-const redirect = vi.fn();
-
-vi.mock("next/navigation", () => ({
-  redirect: (destination: string) => redirect(destination),
+vi.mock("@/components/overview-dashboard", () => ({
+  OverviewDashboard: ({
+    summary,
+    performanceSeries,
+    errorDistribution,
+    automationTypeSplit,
+    useCases,
+  }: {
+    summary: { totalUseCase: number };
+    performanceSeries: unknown[];
+    errorDistribution: unknown[];
+    automationTypeSplit: unknown[];
+    useCases: unknown[];
+  }) => (
+    <div>
+      Provider values: {summary.totalUseCase}, {performanceSeries.length},{" "}
+      {errorDistribution.length}, {automationTypeSplit.length}, {useCases.length}
+    </div>
+  ),
 }));
 
-vi.mock("@/lib/api/server", () => ({
-  getDashboardOverview: vi.fn(),
+vi.mock("@/lib/data/provider", () => ({
+  getRpaDataProvider: vi.fn(),
 }));
 
-const mockGetDashboardOverview = vi.mocked(getDashboardOverview);
-
-const summary = {
-  period: {
-    from: "2026-08-07T00:00:00Z",
-    to: "2026-09-06T00:00:00Z",
-    timezone: "UTC",
-  },
-  freshness: {
-    status: "fresh",
-    last_successful_refresh_at: "2026-09-06T00:00:00Z",
-  },
-  kpis: {
-    total_use_cases: 12,
-    active_use_cases: 9,
-    execution_volume: 100,
-    success_rate: 94,
-    failed_executions: 6,
-  },
-};
+const mockGetRpaDataProvider = vi.mocked(getRpaDataProvider);
 
 describe("DashboardPage", () => {
-  beforeEach(() => {
-    redirect.mockReset();
-    mockGetDashboardOverview.mockReset();
-    redirect.mockImplementation(() => {
-      throw new Error("NEXT_REDIRECT");
-    });
-  });
-
-  it("redirects when any dashboard request rejects the session", async () => {
-    mockGetDashboardOverview.mockResolvedValue({
-      status: "unauthenticated",
-    });
-
-    await expect(DashboardPage()).rejects.toThrow("NEXT_REDIRECT");
-    expect(redirect).toHaveBeenCalledWith("/login");
-  });
-
-  it("renders five KPIs and accessible chart values from API responses", async () => {
-    mockGetDashboardOverview.mockResolvedValue({
-      status: "success",
-      summary: { status: "success", data: summary },
-      trend: {
-        status: "success",
-        data: {
-          period: summary.period,
-          points: [
-            {
-              bucket: "2026-08-01T00:00:00Z",
-              label: "Aug",
-              success: 94,
-              failure: 6,
-            },
-          ],
-        },
-      },
-      errors: {
-        status: "success",
-        data: {
-          period: summary.period,
-          groups: [
-            { code: "faulted", label: "Faulted", count: 4 },
-            { code: "stopped", label: "Stopped", count: 2 },
-          ],
-        },
-      },
-    });
-
-    render(await DashboardPage());
-
-    expect(
-      screen.getByRole("region", {
-        name: "Dashboard key performance indicators",
+  it("loads every overview section through the selected provider", async () => {
+    const provider = {
+      getSummary: vi.fn().mockResolvedValue({
+        totalUseCase: 42,
+        successRate: 91,
+        totalIssue: 8,
+        unattended: 12,
+        attended: 9,
+        reportSent: 31,
       }),
-    ).toBeVisible();
-    expect(screen.getAllByRole("article")).toHaveLength(5);
-    expect(
-      screen.getByRole("img", { name: /Execution trend with 1 time points/ }),
-    ).toBeVisible();
-    expect(screen.getByText(/Aug: 94 successful, 6 failed/)).toBeInTheDocument();
-    expect(screen.getByText("Faulted")).toBeVisible();
-    expect(screen.getByText("4")).toBeVisible();
-  });
-
-  it("shows independent unavailable states without hiding successful panels", async () => {
-    mockGetDashboardOverview.mockResolvedValue({
-      status: "success",
-      summary: { status: "source_unavailable" },
-      trend: {
-        status: "success",
-        data: { period: summary.period, points: [] },
-      },
-      errors: { status: "unexpected_error" },
-    });
+      getPerformanceSeries: vi.fn().mockResolvedValue([
+        { month: "Sep", success: 10, failed: 1, rate: 91 },
+      ]),
+      getErrorDistribution: vi
+        .fn()
+        .mockResolvedValue([{ name: "Error A", value: 8 }]),
+      getAutomationTypeSplit: vi
+        .fn()
+        .mockResolvedValue([{ name: "Unattended", value: 12 }]),
+      getUseCases: vi.fn().mockResolvedValue([
+        {
+          id: "use-case-a",
+          name: "Use Case A",
+          owner: "Operations",
+          description: "Example",
+          successRate: 91,
+          status: "Running",
+          automationType: "Unattended",
+          totalProcess: 11,
+          totalSuccess: 10,
+          totalFailed: 1,
+          issues: [],
+          trend: [],
+        },
+      ]),
+    } as unknown as RpaDataProvider;
+    mockGetRpaDataProvider.mockReturnValue(provider);
 
     render(await DashboardPage());
 
-    expect(
-      screen.getByRole("heading", { name: "Dashboard data unavailable" }),
-    ).toBeVisible();
-    expect(
-      screen.getByText(/Current dashboard data is temporarily unavailable/),
-    ).toBeVisible();
-    expect(screen.queryByText("Total Use Cases")).not.toBeInTheDocument();
-    expect(screen.queryByText("12")).not.toBeInTheDocument();
-    expect(screen.queryByText(/Period:/)).not.toBeInTheDocument();
-    expect(screen.queryByText(/Last refreshed:/)).not.toBeInTheDocument();
-    expect(
-      screen.getByText("No execution trend data is available for this period."),
-    ).toBeVisible();
-    expect(
-      screen.getByText(
-        "We could not load error distribution. Try again later.",
-      ),
-    ).toBeVisible();
+    expect(screen.getByText("Provider values: 42, 1, 1, 1, 1")).toBeVisible();
+    expect(provider.getSummary).toHaveBeenCalledOnce();
+    expect(provider.getPerformanceSeries).toHaveBeenCalledOnce();
+    expect(provider.getErrorDistribution).toHaveBeenCalledOnce();
+    expect(provider.getAutomationTypeSplit).toHaveBeenCalledOnce();
+    expect(provider.getUseCases).toHaveBeenCalledOnce();
   });
 });
