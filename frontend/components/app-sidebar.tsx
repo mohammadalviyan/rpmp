@@ -73,8 +73,8 @@ const groups = [
 ] as const;
 
 export function AppSidebar() {
-  const { state, setOpenMobile } = useSidebar();
-  const collapsed = state === "collapsed";
+  const { isMobile, state, setOpenMobile } = useSidebar();
+  const collapsed = !isMobile && state === "collapsed";
   const pathname = usePathname();
   const isActive = (href: string) =>
     href === "/dashboard"

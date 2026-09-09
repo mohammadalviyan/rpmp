@@ -48,7 +48,7 @@ export function EmailHistoryPreview({
         </p>
       </div>
 
-      <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3 sm:flex sm:justify-between">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div className="relative min-w-0">
           <Search className="pointer-events-none absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <Input
@@ -60,6 +60,7 @@ export function EmailHistoryPreview({
           />
         </div>
         <Tabs
+          className="max-w-full overflow-x-auto"
           value={filter}
           onValueChange={(value) => setFilter(value as StatusFilter)}
         >

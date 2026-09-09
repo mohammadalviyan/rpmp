@@ -26,6 +26,14 @@ const routeHeaders = {
     title: "Report History",
     subtitle: "Sample report records with preview-only downloads",
   },
+  emailManagement: {
+    title: "Email Management",
+    subtitle: "Preview report delivery schedules without sending email",
+  },
+  emailHistory: {
+    title: "Email History",
+    subtitle: "Sample report email delivery records",
+  },
   generalSettings: {
     title: "General Settings",
     subtitle: "Preview workspace preferences without saving changes",
@@ -51,13 +59,17 @@ export function ProtectedHeader({ user }: { user: User }) {
           ? routeHeaders.generateReport
           : pathname === "/report-history"
             ? routeHeaders.reportHistory
-            : pathname === "/settings/general"
-              ? routeHeaders.generalSettings
-              : pathname === "/settings/users"
-                ? routeHeaders.userManagement
-                : pathname === "/settings/email"
-                  ? routeHeaders.emailSettings
-                  : routeHeaders.dashboard;
+            : pathname === "/email-management"
+              ? routeHeaders.emailManagement
+              : pathname === "/email-history"
+                ? routeHeaders.emailHistory
+                : pathname === "/settings/general"
+                  ? routeHeaders.generalSettings
+                  : pathname === "/settings/users"
+                    ? routeHeaders.userManagement
+                    : pathname === "/settings/email"
+                      ? routeHeaders.emailSettings
+                      : routeHeaders.dashboard;
 
   return <DashboardHeader {...header} user={user} />;
 }

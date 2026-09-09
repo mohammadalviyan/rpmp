@@ -132,12 +132,20 @@ export function EmailManagementPreview({
           <h2 className="text-sm font-bold">
             Email schedules ({schedules.length})
           </h2>
+          {schedules.length === 0 ? (
+            <div className="surface-card px-5 py-10 text-center hover:shadow-none">
+              <p className="text-sm font-semibold">No preview schedules</p>
+              <p className="mt-1 text-xs text-muted-foreground">
+                Configure a schedule to add it to this browser view.
+              </p>
+            </div>
+          ) : null}
           {schedules.map((schedule) => (
             <div
               key={schedule.id}
               className="surface-card p-5 hover:shadow-none"
             >
-              <div className="flex items-start justify-between gap-3">
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                 <div className="flex min-w-0 items-start gap-3">
                   <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-primary/12 text-primary">
                     <Mail className="h-4 w-4" />
@@ -163,7 +171,7 @@ export function EmailManagementPreview({
                     </div>
                   </div>
                 </div>
-                <div className="flex shrink-0 items-center gap-1">
+                <div className="flex shrink-0 items-center justify-between gap-1 sm:justify-start">
                   <span
                     className={
                       schedule.active
