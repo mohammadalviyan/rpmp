@@ -18,6 +18,14 @@ const routeHeaders = {
     title: "Use Case Details",
     subtitle: "Performance and issue history for one automation process",
   },
+  generateReport: {
+    title: "Generate Report",
+    subtitle: "Configure a preview-only report simulation",
+  },
+  reportHistory: {
+    title: "Report History",
+    subtitle: "Sample report records with preview-only downloads",
+  },
 } as const;
 
 export function ProtectedHeader({ user }: { user: User }) {
@@ -27,7 +35,11 @@ export function ProtectedHeader({ user }: { user: User }) {
       ? routeHeaders.useCases
       : pathname.startsWith("/use-cases/")
         ? routeHeaders.useCaseDetail
-        : routeHeaders.dashboard;
+        : pathname === "/generate-report"
+          ? routeHeaders.generateReport
+          : pathname === "/report-history"
+            ? routeHeaders.reportHistory
+            : routeHeaders.dashboard;
 
   return <DashboardHeader {...header} user={user} />;
 }
