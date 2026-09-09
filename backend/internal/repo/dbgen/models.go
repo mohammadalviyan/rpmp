@@ -17,6 +17,43 @@ type AuditEvent struct {
 	OccurredAt  pgtype.Timestamptz
 }
 
+type Execution struct {
+	ID         pgtype.UUID
+	UseCaseID  pgtype.UUID
+	OccurredAt pgtype.Timestamptz
+	Outcome    string
+	SourceRef  string
+	CreatedAt  pgtype.Timestamptz
+}
+
+type ExecutionError struct {
+	ID          pgtype.UUID
+	ExecutionID pgtype.UUID
+	UseCaseID   pgtype.UUID
+	OccurredAt  pgtype.Timestamptz
+	Code        string
+	Label       string
+	CreatedAt   pgtype.Timestamptz
+}
+
+type SyncRun struct {
+	ID          pgtype.UUID
+	StartedAt   pgtype.Timestamptz
+	FinishedAt  pgtype.Timestamptz
+	Status      string
+	RowsRead    int32
+	RowsWritten int32
+	ErrorCode   pgtype.Text
+}
+
+type UseCase struct {
+	ID        pgtype.UUID
+	SourceKey string
+	Name      string
+	Status    string
+	UpdatedAt pgtype.Timestamptz
+}
+
 type User struct {
 	ID           pgtype.UUID
 	EmployeeID   string

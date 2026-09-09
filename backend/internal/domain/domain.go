@@ -65,11 +65,77 @@ type UseCase struct {
 	Status UseCaseStatus
 }
 
+type StoredUseCase struct {
+	ID        string
+	SourceKey string
+	Name      string
+	Status    UseCaseStatus
+	UpdatedAt time.Time
+}
+
 type Execution struct {
 	ID        string
 	UseCaseID string
 	StartedAt time.Time
 	Status    ExecutionStatus
+}
+
+type ExecutionOutcome string
+
+const (
+	ExecutionOutcomeSuccess ExecutionOutcome = "success"
+	ExecutionOutcomeFailure ExecutionOutcome = "failure"
+)
+
+type StoredExecution struct {
+	ID         string
+	UseCaseID  string
+	OccurredAt time.Time
+	Outcome    ExecutionOutcome
+	SourceRef  string
+	CreatedAt  time.Time
+}
+
+type ExecutionError struct {
+	ID          string
+	ExecutionID *string
+	UseCaseID   string
+	OccurredAt  time.Time
+	Code        string
+	Label       string
+	CreatedAt   time.Time
+}
+
+type SyncRunStatus string
+
+const (
+	SyncRunRunning SyncRunStatus = "running"
+	SyncRunSuccess SyncRunStatus = "success"
+	SyncRunFailure SyncRunStatus = "failure"
+)
+
+type SyncRun struct {
+	ID          string
+	StartedAt   time.Time
+	FinishedAt  *time.Time
+	Status      SyncRunStatus
+	RowsRead    int32
+	RowsWritten int32
+	ErrorCode   *string
+}
+
+type SyncRunStart struct {
+	ID        string
+	StartedAt time.Time
+}
+
+type SyncRunFinish struct {
+	ID          string
+	FinishedAt  time.Time
+	Status      SyncRunStatus
+	RowsRead    int32
+	RowsWritten int32
+	ErrorCode   *string
 }
 
 type FreshnessStatus string
