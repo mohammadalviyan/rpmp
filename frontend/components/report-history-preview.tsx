@@ -53,7 +53,8 @@ export function ReportHistoryPreview({
       </div>
 
       <div className="surface-card overflow-hidden hover:shadow-none">
-        <Table>
+        <div className="overflow-x-auto">
+          <Table>
           <TableHeader>
             <TableRow className="hover:bg-transparent">
               <TableHead>Report ID</TableHead>
@@ -117,7 +118,8 @@ export function ReportHistoryPreview({
               </TableRow>
             ) : null}
           </TableBody>
-        </Table>
+          </Table>
+        </div>
       </div>
     </main>
   );

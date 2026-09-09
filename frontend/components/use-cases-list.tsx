@@ -41,7 +41,7 @@ export function UseCasesList({ useCases }: { useCases: UseCase[] }) {
 
   return (
     <main className="mx-auto w-full max-w-[1600px] space-y-6 px-4 py-8 sm:px-6 lg:px-8">
-      <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3 sm:flex sm:justify-between">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div className="relative min-w-0">
           <Search
             aria-hidden="true"
@@ -56,6 +56,7 @@ export function UseCasesList({ useCases }: { useCases: UseCase[] }) {
           />
         </div>
         <Tabs
+          className="max-w-full overflow-x-auto"
           onValueChange={(value) => setFilter(value as Filter)}
           value={filter}
         >
@@ -74,7 +75,8 @@ export function UseCasesList({ useCases }: { useCases: UseCase[] }) {
       </div>
 
       <div className="overflow-hidden rounded-2xl border bg-card shadow-[0_8px_24px_var(--bri-black-opacity-10)]">
-        <Table>
+        <div className="overflow-x-auto">
+          <Table>
           <TableHeader>
             <TableRow className="hover:bg-transparent">
               <TableHead className="min-w-48">Use Case</TableHead>
@@ -152,7 +154,8 @@ export function UseCasesList({ useCases }: { useCases: UseCase[] }) {
               </TableRow>
             ) : null}
           </TableBody>
-        </Table>
+          </Table>
+        </div>
       </div>
     </main>
   );

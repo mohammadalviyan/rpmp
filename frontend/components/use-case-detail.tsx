@@ -122,37 +122,49 @@ export function UseCaseDetail({ useCase }: { useCase: UseCase }) {
             Errors detected for this use case
           </p>
         </div>
-        <Table>
-          <TableHeader>
-            <TableRow className="hover:bg-transparent">
-              <TableHead className="min-w-56">Issue</TableHead>
-              <TableHead>Occurred At</TableHead>
-              <TableHead>Error Type</TableHead>
-              <TableHead>Status</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {useCase.issues.map((issue) => (
-              <TableRow key={issue.id}>
-                <TableCell>
-                  <p className="text-sm font-semibold">{issue.name}</p>
-                  <p className="max-w-xl whitespace-normal text-xs text-muted-foreground">
-                    {issue.description}
-                  </p>
-                </TableCell>
-                <TableCell className="text-xs whitespace-nowrap text-muted-foreground">
-                  {issue.occurredAt}
-                </TableCell>
-                <TableCell>
-                  <ErrorTypeBadge type={issue.errorType} />
-                </TableCell>
-                <TableCell>
-                  <IssueStatusBadge status={issue.status} />
-                </TableCell>
+        <div className="overflow-x-auto">
+          <Table>
+            <TableHeader>
+              <TableRow className="hover:bg-transparent">
+                <TableHead className="min-w-56">Issue</TableHead>
+                <TableHead>Occurred At</TableHead>
+                <TableHead>Error Type</TableHead>
+                <TableHead>Status</TableHead>
               </TableRow>
-            ))}
-          </TableBody>
-        </Table>
+            </TableHeader>
+            <TableBody>
+              {useCase.issues.map((issue) => (
+                <TableRow key={issue.id}>
+                  <TableCell>
+                    <p className="text-sm font-semibold">{issue.name}</p>
+                    <p className="max-w-xl whitespace-normal text-xs text-muted-foreground">
+                      {issue.description}
+                    </p>
+                  </TableCell>
+                  <TableCell className="text-xs whitespace-nowrap text-muted-foreground">
+                    {issue.occurredAt}
+                  </TableCell>
+                  <TableCell>
+                    <ErrorTypeBadge type={issue.errorType} />
+                  </TableCell>
+                  <TableCell>
+                    <IssueStatusBadge status={issue.status} />
+                  </TableCell>
+                </TableRow>
+              ))}
+              {useCase.issues.length === 0 ? (
+                <TableRow>
+                  <TableCell
+                    className="py-10 text-center text-sm text-muted-foreground"
+                    colSpan={4}
+                  >
+                    No issues recorded for this use case.
+                  </TableCell>
+                </TableRow>
+              ) : null}
+            </TableBody>
+          </Table>
+        </div>
       </section>
     </main>
   );

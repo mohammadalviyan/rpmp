@@ -267,7 +267,8 @@ export function UserManagementPreview() {
             Sample members ({members.length})
           </h2>
         </div>
-        <Table>
+        <div className="overflow-x-auto">
+          <Table>
           <TableHeader>
             <TableRow className="hover:bg-transparent">
               <TableHead className="min-w-56">User</TableHead>
@@ -335,7 +336,8 @@ export function UserManagementPreview() {
               </TableRow>
             ))}
           </TableBody>
-        </Table>
+          </Table>
+        </div>
       </section>
     </main>
   );

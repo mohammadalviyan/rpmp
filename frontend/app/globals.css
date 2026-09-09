@@ -27,6 +27,8 @@
   --color-input: var(--input);
   --color-border: var(--border);
   --color-destructive: var(--destructive);
+  --color-success: var(--success);
+  --color-warning: var(--warning);
   --color-accent-foreground: var(--accent-foreground);
   --color-accent: var(--accent);
   --color-muted-foreground: var(--muted-foreground);
@@ -171,6 +173,8 @@
   --accent: var(--bri-black-200);
   --accent-foreground: var(--bri-black-main);
   --destructive: var(--bri-red-main);
+  --success: var(--bri-green-main);
+  --warning: var(--bri-yellow-700);
   --border: var(--bri-black-300);
   --input: var(--bri-black-300);
   --ring: var(--bri-primary-cakrawala-main);
@@ -179,7 +183,7 @@
   --chart-3: oklch(0.439 0 0);
   --chart-4: oklch(0.371 0 0);
   --chart-5: oklch(0.269 0 0);
-  --radius: 0.625rem;
+  --radius: 0.875rem;
   --sidebar: var(--bri-white-main);
   --sidebar-foreground: var(--bri-black-main);
   --sidebar-primary: var(--bri-primary-cakrawala-main);
@@ -206,6 +210,8 @@
   --accent: oklch(0.269 0 0);
   --accent-foreground: oklch(0.985 0 0);
   --destructive: oklch(0.704 0.191 22.216);
+  --success: var(--bri-green-400);
+  --warning: var(--bri-yellow-400);
   --border: oklch(1 0 0 / 10%);
   --input: oklch(1 0 0 / 15%);
   --ring: oklch(0.556 0 0);
@@ -233,5 +239,25 @@
   }
   html {
     @apply font-sans;
+  }
+}
+
+@utility surface-card {
+  background-color: var(--color-card);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-xl);
+  box-shadow: 0 8px 24px var(--bri-black-opacity-10);
+  transition:
+    border-color 200ms ease,
+    box-shadow 200ms ease;
+
+  &:hover {
+    border-color: color-mix(
+      in oklab,
+      var(--color-primary) 35%,
+      var(--color-border)
+    );
+    box-shadow: 0 12px 30px -18px
+      color-mix(in oklab, var(--color-primary) 45%, transparent);
   }
 }
