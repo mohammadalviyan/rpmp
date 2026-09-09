@@ -3,7 +3,7 @@
 **Status**: Proposed
 **Date**: 2026-09-06
 **Authors**: Development Team
-**Version**: 1.2
+**Version**: 1.3
 
 ## Document Information
 
@@ -19,7 +19,7 @@ RPMP is an information layer over Orchestrator / RPA data. It is not a robot con
 - **API**: REST over HTTP (`GET /api/v1/...` as sketched in PRD §18)
 - **Database**: PostgreSQL (or the approved relational engine)
 - **SQL access**: sqlc generating type-safe queries on top of pgx (proposed)
-- **Integration**: Orchestrator HTTP API **or** approved read-only DB, behind `internal/adapter`
+- **Integration**: v1 copies a read-only source Postgres via `cmd/sync` into RPMP tables (`internal/adapter`). Orchestrator HTTP/Swagger is later. HTTP never queries the source DSN.
 - **Auth**: Internal first, SSO-ready. Short-lived access JWT in an httpOnly cookie; no refresh token in Slice 1
 - **Layout**: `backend/cmd` + `backend/internal` (folders not created yet)
 
@@ -32,6 +32,7 @@ RPMP is an information layer over Orchestrator / RPA data. It is not a robot con
 5. Explicit SQL columns, typed domain errors mapped to HTTP
 6. RPMP stores metadata and aggregations; it does not become the system of record for robot execution
 7. Style: **pragmatic layered architecture with an anti-corruption layer**. Not full hexagonal. Not Clean Architecture four rings.
+8. v1 dashboard reads RPMP Postgres only. Cron/`cmd/sync` plus optional Admin `POST /api/v1/sync` (202). Not real-time.
 
 ---
 
@@ -135,35 +136,84 @@ Login is a **usecase**, not logic inside middleware. Middleware only authenticat
 
 ---
 
-### Decision 3: Orchestrator vs read-only DB
+### Decision 3: Orchestrator vs read-only DB (v1 local sync)
 
 #### Context
 
-PRD §16.2: prefer official Orchestrator API, then approved DB/read replica. Direct production DB only if formally approved. Dashboard must not bind to raw production tables from the frontend.
+PRD §16.2: prefer official Orchestrator API, then approved DB/read replica. Direct production DB only if formally approved. Dashboard must not bind to raw production tables from the frontend. Orchestrator HTTP/Swagger is slow to productize. Slice 1 already serves dashboard JSON from a file stub.
 
 #### Decision
 
-Put **one** `Source` interface in `internal/adapter`. First implementation is whichever Phase 0 discovery unlocks (API or read-only DB). Map vendor payloads to RPMP types inside the adapter. Persist RPMP-owned metadata and pre-aggregations in PostgreSQL via `repo`.
+**v1 (local / presentation-to-live):** do **not** call Orchestrator Swagger from `cmd/api`. Copy operational rows from a **read-only** source Postgres (local replica, dump restore, or approved replica) into **RPMP-owned** tables via `cmd/sync` on a schedule. Dashboard usecases read only RPMP Postgres.
+
+Keep **one** `Source` mapping in `internal/adapter` (vendor columns and `JobState` stay there). HTTP never opens the Orchestrator connection string.
+
+Freshness is explicit in the UI (`last_successful_refresh_at`, stale/failed). This is batch data, not real-time. Admin may trigger the same sync job asynchronously (`POST /api/v1/sync` returns 202). Cron remains the default. A manual button does not claim live data.
+
+Orchestrator HTTP API stays a later adapter implementation behind the same domain types, not a blocker for Overview-on-real-rows.
 
 #### Rationale
 
-- PRD allows either integration; locking the vendor client into usecases would force a rewrite
-- Frontend never receives `JobState = 3` (PRD §17 example)
+- Reporting SQL fits history and aggregates better than a awkward Swagger surface
+- Request path stays fast and free of vendor credentials
+- File stub remains for unit tests when `DATABASE_URL` source is unset
+- Matches PRD: adapter boundary, no frontend-to-Orchestrator, batch refresh acceptable for MVP
 
 #### Alternatives considered
 
-**Frontend calls Orchestrator**
+**Frontend or handler queries Orchestrator DB**
 
-- Rejected: PRD forbids direct frontend access to Orchestrator DB; credentials and jargon would leak
+- Rejected: leaks schema, ties latency to source, violates PRD
+
+**Clone vendor table names into RPMP (`Jobs`, `Releases`)**
+
+- Rejected: UI and usecases would speak vendor; schema churn breaks the app
+
+**Wait for Swagger before any live numbers**
+
+- Rejected: blocks presentation; API can replace the adapter later
 
 **Only cache, no RPMP database**
 
-- Rejected: metadata, business names, and historical comparison need a store RPMP controls
+- Rejected: metadata, comparison, and freshness need a store RPMP controls
 
 #### Consequences
 
-- Phase 0 still answers product/version, rate limits, and table inventory (PRD §33)
-- If both API and DB exist, prefer API for live status and DB for heavy history, still behind the same interface
+- Need a table inventory (Phase 0 lite) before `cmd/sync` SQL is written. Explicit columns only.
+- Production Orchestrator DB still needs formal approval. Local dump/replica is the default for development.
+- UI must not label the dashboard "live." Show last sync time and optional Admin sync.
+- If API and DB both exist later: API for live robot status if needed; DB/sync for history. Same domain types.
+
+---
+
+### Decision 8: Sync job and manual trigger
+
+#### Context
+
+Copied data lags the source. Operators and demos need a way to refresh without pretending the dashboard is a live tail of Orchestrator.
+
+#### Decision
+
+- `cmd/sync`: CLI used by cron (interval documented, default 5–15 minutes in local compose/docs). Reads source DSN (`RPMP_SOURCE_DATABASE_URL`, read-only). Writes RPMP tables. Inserts `sync_runs`.
+- One sync at a time (DB advisory lock or row lock). Overlapping cron/manual is a no-op or 409.
+- `POST /api/v1/sync`: Admin only. Starts the same job in-process or exec; returns **202** with run id. Do not block the HTTP handler on a long source query.
+- `GET /api/v1/sync/status` or reuse dashboard `freshness`: last run, status, timestamps. Viewer may read status. Only Admin may POST.
+- Dashboard `503 source_unavailable` when there is no successful sync and no usable rows, or last run failed and product chooses fail-closed. Prefer showing last good numbers plus `freshness.status = sync_failed` unless empty.
+
+#### Alternatives considered
+
+**Sync inside GET /dashboard/summary**
+
+- Rejected: first page load would hammer the source
+
+**Viewer can press Sync**
+
+- Rejected: easy to stampede the source DB
+
+#### Consequences
+
+- Need `sync_runs` in BE-05. Worker code shared by CLI and POST.
+- Frontend Overview shows freshness copy and an Admin-only sync control.
 
 ---
 
@@ -329,13 +379,15 @@ Identity has three different jobs: prove who the caller is on each request (auth
 
 ## 4. Open questions
 
-1. Orchestrator product/version and auth (PRD §33)
+1. Orchestrator product/version and the **local source table/column inventory** for `cmd/sync` (PRD §33). Blocks BE-06 SQL, not BE-05.
 2. Whether sqlc is allowed by enterprise Go standards
-3. Where aggregations run (sync job vs request time)
+3. Sync interval for local cron (default 5–15 minutes until ops pick one)
+4. Production source: approved replica vs dump vs (later) HTTP API. Swagger is not v1.
 
 ## 5. References
 
 - `docs/PRD.md` §16–18, §33–35
+- `docs/plans/LOCAL_DB_SYNC_2026-09-09.md`
 - `docs/adrs/ADR_FRONTEND.md`
 - `docs/adrs/ADR_AI_ORCHESTRATION.md`
 - `AGENTS.md`
