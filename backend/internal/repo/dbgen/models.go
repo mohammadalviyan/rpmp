@@ -8,6 +8,14 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
+type AggregateSnapshot struct {
+	ID                pgtype.UUID
+	SyncRunID         pgtype.UUID
+	SourceSnapshotKey string
+	ImportedAt        pgtype.Timestamptz
+	SourceRowCount    int32
+}
+
 type AuditEvent struct {
 	ID          pgtype.UUID
 	ActorUserID pgtype.UUID
@@ -34,6 +42,29 @@ type ExecutionError struct {
 	Code        string
 	Label       string
 	CreatedAt   pgtype.Timestamptz
+}
+
+type ProcessAggregateRow struct {
+	ID                     pgtype.UUID
+	AggregateSnapshotID    pgtype.UUID
+	SyncRunID              pgtype.UUID
+	UseCaseID              pgtype.UUID
+	SourceProcessKey       string
+	ProcessName            string
+	PackageName            string
+	EnvironmentName        pgtype.Text
+	ExecutingCount         int32
+	PendingCount           int32
+	SuspendedCount         int32
+	ResumedCount           int32
+	SuccessfulCount        int32
+	ErrorCount             int32
+	StoppedCount           int32
+	AverageDurationSeconds pgtype.Float8
+	AveragePendingSeconds  pgtype.Float8
+	SourceTotalRows        int32
+	SourceEntityKey        string
+	ImportedAt             pgtype.Timestamptz
 }
 
 type SyncRun struct {

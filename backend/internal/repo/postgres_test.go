@@ -2,6 +2,7 @@ package repo
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -47,7 +48,11 @@ func TestPostgresRepositoryAndMigration(t *testing.T) {
 	}
 	defer pool.Close()
 
-	for _, name := range []string{"000001_auth.up.sql", "000002_operational.up.sql"} {
+	for _, name := range []string{
+		"000001_auth.up.sql",
+		"000002_operational.up.sql",
+		"000003_aggregate_snapshots.up.sql",
+	} {
 		migration, err := os.ReadFile(filepath.Join("..", "..", "db", "migrations", name))
 		if err != nil {
 			t.Fatal(err)
@@ -205,6 +210,204 @@ func TestPostgresRepositoryAndMigration(t *testing.T) {
 		t.Fatalf("find sync run: run=%#v err=%v", foundSyncRun, err)
 	}
 
+	syncRepository := NewSyncPostgres(pool)
+	session, acquired, err := syncRepository.TryAcquireSyncSession(ctx)
+	if err != nil || !acquired {
+		t.Fatalf("acquire sync session: acquired=%t err=%v", acquired, err)
+	}
+	overlap, overlapAcquired, err := syncRepository.TryAcquireSyncSession(ctx)
+	if err != nil || overlapAcquired || overlap != nil {
+		t.Fatalf("overlapping session: session=%#v acquired=%t err=%v", overlap, overlapAcquired, err)
+	}
+	aggregateRunID := uuid.NewString()
+	if _, err := session.StartSyncRun(ctx, domain.SyncRunStart{ID: aggregateRunID, StartedAt: now}); err != nil {
+		t.Fatal(err)
+	}
+	environment := "Production"
+	duration := 12.5
+	snapshot := domain.AggregateSnapshot{
+		SourceSnapshotKey: "csv-sha256:integration",
+		ImportedAt:        now,
+		Rows: []domain.ProcessAggregate{
+			{
+				SourceProcessKey: "10", UseCaseSourceKey: "Area/Name", UseCaseName: "Area/Name",
+				ProcessName: "Error Process", PackageName: "error.pkg",
+				SuccessfulCount: 0, ErrorCount: 3, StoppedCount: 0,
+				SourceTotalRows: 2, SourceEntityKey: "110",
+			},
+			{
+				SourceProcessKey: "11", UseCaseSourceKey: "Area/Name", UseCaseName: "Area/Name",
+				ProcessName: "Stopped Process", PackageName: "stopped.pkg",
+				EnvironmentName: &environment, SuccessfulCount: 0, ErrorCount: 0, StoppedCount: 4,
+				AverageDurationSeconds: &duration, SourceTotalRows: 2, SourceEntityKey: "111",
+			},
+		},
+	}
+	published, err := session.PublishSnapshot(ctx, aggregateRunID, snapshot)
+	if err != nil || published.RowsWritten != 2 || published.Idempotent {
+		t.Fatalf("publish snapshot: result=%#v err=%v", published, err)
+	}
+	if _, err := session.FinishSyncRun(ctx, domain.SyncRunFinish{
+		ID: aggregateRunID, FinishedAt: now, Status: domain.SyncRunSuccess,
+		RowsRead: 2, RowsWritten: 2,
+	}); err != nil {
+		t.Fatal(err)
+	}
+	if err := session.Release(ctx); err != nil {
+		t.Fatal(err)
+	}
+
+	var aggregateRows, groupedUseCases, failures int
+	if err := pool.QueryRow(ctx, `
+		SELECT
+		    count(par.id),
+		    count(DISTINCT par.use_case_id),
+		    coalesce(sum(par.error_count + par.stopped_count), 0)
+		FROM process_aggregate_rows par
+		JOIN aggregate_snapshots snapshots ON snapshots.id = par.aggregate_snapshot_id
+		WHERE snapshots.source_snapshot_key = $1
+	`, snapshot.SourceSnapshotKey).Scan(&aggregateRows, &groupedUseCases, &failures); err != nil {
+		t.Fatal(err)
+	}
+	if aggregateRows != 2 || groupedUseCases != 1 || failures != 7 {
+		t.Fatalf("aggregate rows=%d use_cases=%d failures=%d", aggregateRows, groupedUseCases, failures)
+	}
+
+	secondSession, acquired, err := syncRepository.TryAcquireSyncSession(ctx)
+	if err != nil || !acquired {
+		t.Fatalf("reacquire sync session: acquired=%t err=%v", acquired, err)
+	}
+	secondRunID := uuid.NewString()
+	if _, err := secondSession.StartSyncRun(ctx, domain.SyncRunStart{ID: secondRunID, StartedAt: now}); err != nil {
+		t.Fatal(err)
+	}
+	idempotent, err := secondSession.PublishSnapshot(ctx, secondRunID, snapshot)
+	if err != nil || !idempotent.Idempotent || idempotent.RowsWritten != 0 {
+		t.Fatalf("idempotent publish: result=%#v err=%v", idempotent, err)
+	}
+	if _, err := secondSession.FinishSyncRun(ctx, domain.SyncRunFinish{
+		ID: secondRunID, FinishedAt: now, Status: domain.SyncRunSuccess,
+		RowsRead: 2, RowsWritten: 0,
+	}); err != nil {
+		t.Fatal(err)
+	}
+	if err := secondSession.Release(ctx); err != nil {
+		t.Fatal(err)
+	}
+
+	failedSession, acquired, err := syncRepository.TryAcquireSyncSession(ctx)
+	if err != nil || !acquired {
+		t.Fatalf("acquire session for rollback: acquired=%t err=%v", acquired, err)
+	}
+	failedRunID := uuid.NewString()
+	if _, err := failedSession.StartSyncRun(ctx, domain.SyncRunStart{ID: failedRunID, StartedAt: now}); err != nil {
+		t.Fatal(err)
+	}
+	conflicting := domain.AggregateSnapshot{
+		SourceSnapshotKey: "csv-sha256:conflict",
+		ImportedAt:        now,
+		Rows: []domain.ProcessAggregate{
+			{
+				SourceProcessKey: "20", UseCaseSourceKey: "Area/Conflict", UseCaseName: "Area/Conflict",
+				ProcessName: "First", PackageName: "first.pkg", SourceTotalRows: 2, SourceEntityKey: "120",
+			},
+			{
+				SourceProcessKey: "20", UseCaseSourceKey: "Area/Conflict", UseCaseName: "Area/Conflict",
+				ProcessName: "Duplicate", PackageName: "duplicate.pkg", SourceTotalRows: 2, SourceEntityKey: "121",
+			},
+		},
+	}
+	if _, err := failedSession.PublishSnapshot(ctx, failedRunID, conflicting); err == nil {
+		t.Fatal("duplicate source process key accepted")
+	}
+	var conflictSnapshots int
+	if err := pool.QueryRow(ctx, `
+		SELECT count(id)
+		FROM aggregate_snapshots
+		WHERE source_snapshot_key = $1
+	`, conflicting.SourceSnapshotKey).Scan(&conflictSnapshots); err != nil {
+		t.Fatal(err)
+	}
+	if conflictSnapshots != 0 {
+		t.Fatalf("failed publish left %d snapshots", conflictSnapshots)
+	}
+	failureCode := "snapshot_write_failed"
+	recorded, err := failedSession.FinishSyncRun(ctx, domain.SyncRunFinish{
+		ID: failedRunID, FinishedAt: now, Status: domain.SyncRunFailure,
+		RowsRead: 2, RowsWritten: 0, ErrorCode: &failureCode,
+	})
+	if err != nil || recorded.Status != domain.SyncRunFailure {
+		t.Fatalf("record failure after rollback: run=%#v err=%v", recorded, err)
+	}
+
+	canceledCtx, cancelRequest := context.WithCancel(ctx)
+	tx, err := failedSession.(*syncSession).conn.Begin(canceledCtx)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := tx.Exec(canceledCtx, `SELECT 1`); err != nil {
+		t.Fatal(err)
+	}
+	cancelRequest()
+	if err := failedSession.(*syncSession).rollback(tx); err != nil {
+		t.Fatalf("rollback after request cancellation: %v", err)
+	}
+	if failedSession.(*syncSession).poisoned {
+		t.Fatal("confirmed rollback poisoned a healthy session")
+	}
+	if _, err := failedSession.FinishSyncRun(ctx, domain.SyncRunFinish{
+		ID: failedRunID, FinishedAt: now, Status: domain.SyncRunFailure,
+		RowsRead: 2, RowsWritten: 0, ErrorCode: &failureCode,
+	}); err != nil {
+		t.Fatalf("session unusable after cleanup: %v", err)
+	}
+	if err := failedSession.Release(ctx); err != nil {
+		t.Fatal(err)
+	}
+
+	poisonedSession, acquired, err := syncRepository.TryAcquireSyncSession(ctx)
+	if err != nil || !acquired {
+		t.Fatalf("acquire session for discard: acquired=%t err=%v", acquired, err)
+	}
+	if err := poisonedSession.(*syncSession).discard(); err != nil {
+		t.Fatal(err)
+	}
+	poisonedRunID := uuid.NewString()
+	if _, err := poisonedSession.StartSyncRun(ctx, domain.SyncRunStart{
+		ID: poisonedRunID, StartedAt: now,
+	}); !errors.Is(err, errSyncSessionUnusable) {
+		t.Fatalf("start on discarded session: %v", err)
+	}
+	if _, err := poisonedSession.PublishSnapshot(ctx, poisonedRunID, snapshot); !errors.Is(err, errSyncSessionUnusable) {
+		t.Fatalf("publish on discarded session: %v", err)
+	}
+	if _, err := poisonedSession.FinishSyncRun(ctx, domain.SyncRunFinish{
+		ID: failedRunID, FinishedAt: now, Status: domain.SyncRunSuccess, RowsRead: 2, RowsWritten: 2,
+	}); !errors.Is(err, errSyncSessionUnusable) {
+		t.Fatalf("finish on discarded session: %v", err)
+	}
+	if err := poisonedSession.Release(ctx); err != nil {
+		t.Fatalf("release discarded session: %v", err)
+	}
+	var stillFailed string
+	if err := pool.QueryRow(ctx, `
+		SELECT status
+		FROM sync_runs
+		WHERE id = $1
+	`, failedRunID).Scan(&stillFailed); err != nil {
+		t.Fatal(err)
+	}
+	if stillFailed != string(domain.SyncRunFailure) {
+		t.Fatalf("discarded session changed run status to %q", stillFailed)
+	}
+	afterDiscard, acquired, err := syncRepository.TryAcquireSyncSession(ctx)
+	if err != nil || !acquired {
+		t.Fatalf("advisory lock not free after discard: acquired=%t err=%v", acquired, err)
+	}
+	if err := afterDiscard.Release(ctx); err != nil {
+		t.Fatal(err)
+	}
+
 	var columnCount int
 	if err := pool.QueryRow(ctx, `
 		SELECT count(column_name)
@@ -218,10 +421,12 @@ func TestPostgresRepositoryAndMigration(t *testing.T) {
 	}
 
 	for table, expected := range map[string]int{
-		"use_cases":        5,
-		"executions":       6,
-		"execution_errors": 7,
-		"sync_runs":        7,
+		"use_cases":              5,
+		"executions":             6,
+		"execution_errors":       7,
+		"sync_runs":              7,
+		"aggregate_snapshots":    5,
+		"process_aggregate_rows": 20,
 	} {
 		if err := pool.QueryRow(ctx, `
 			SELECT count(column_name)

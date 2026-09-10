@@ -75,3 +75,51 @@ WHERE id = $1;
 SELECT id, started_at, finished_at, status, rows_read, rows_written, error_code
 FROM sync_runs
 WHERE id = $1;
+
+-- name: InsertAggregateSnapshot :one
+INSERT INTO aggregate_snapshots (
+    id,
+    sync_run_id,
+    source_snapshot_key,
+    imported_at,
+    source_row_count
+) VALUES ($1, $2, $3, $4, $5)
+ON CONFLICT (source_snapshot_key) DO NOTHING
+RETURNING id, sync_run_id, source_snapshot_key, imported_at, source_row_count;
+
+-- name: InsertProcessAggregateRows :copyfrom
+INSERT INTO process_aggregate_rows (
+    id,
+    aggregate_snapshot_id,
+    sync_run_id,
+    use_case_id,
+    source_process_key,
+    process_name,
+    package_name,
+    environment_name,
+    executing_count,
+    pending_count,
+    suspended_count,
+    resumed_count,
+    successful_count,
+    error_count,
+    stopped_count,
+    average_duration_seconds,
+    average_pending_seconds,
+    source_total_rows,
+    source_entity_key,
+    imported_at
+) VALUES (
+    $1, $2, $3, $4, $5, $6, $7, $8, $9, $10,
+    $11, $12, $13, $14, $15, $16, $17, $18, $19, $20
+);
+
+-- name: GetAggregateSnapshotBySourceKey :one
+SELECT id, sync_run_id, source_snapshot_key, imported_at, source_row_count
+FROM aggregate_snapshots
+WHERE source_snapshot_key = $1;
+
+-- name: CountProcessAggregateRowsBySnapshot :one
+SELECT count(id)
+FROM process_aggregate_rows
+WHERE aggregate_snapshot_id = $1;

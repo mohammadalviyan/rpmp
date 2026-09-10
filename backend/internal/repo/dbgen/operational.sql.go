@@ -11,6 +11,19 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
+const countProcessAggregateRowsBySnapshot = `-- name: CountProcessAggregateRowsBySnapshot :one
+SELECT count(id)
+FROM process_aggregate_rows
+WHERE aggregate_snapshot_id = $1
+`
+
+func (q *Queries) CountProcessAggregateRowsBySnapshot(ctx context.Context, aggregateSnapshotID pgtype.UUID) (int64, error) {
+	row := q.db.QueryRow(ctx, countProcessAggregateRowsBySnapshot, aggregateSnapshotID)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
+}
+
 const finishSyncRun = `-- name: FinishSyncRun :one
 UPDATE sync_runs
 SET
@@ -50,6 +63,25 @@ func (q *Queries) FinishSyncRun(ctx context.Context, arg FinishSyncRunParams) (S
 		&i.RowsRead,
 		&i.RowsWritten,
 		&i.ErrorCode,
+	)
+	return i, err
+}
+
+const getAggregateSnapshotBySourceKey = `-- name: GetAggregateSnapshotBySourceKey :one
+SELECT id, sync_run_id, source_snapshot_key, imported_at, source_row_count
+FROM aggregate_snapshots
+WHERE source_snapshot_key = $1
+`
+
+func (q *Queries) GetAggregateSnapshotBySourceKey(ctx context.Context, sourceSnapshotKey string) (AggregateSnapshot, error) {
+	row := q.db.QueryRow(ctx, getAggregateSnapshotBySourceKey, sourceSnapshotKey)
+	var i AggregateSnapshot
+	err := row.Scan(
+		&i.ID,
+		&i.SyncRunID,
+		&i.SourceSnapshotKey,
+		&i.ImportedAt,
+		&i.SourceRowCount,
 	)
 	return i, err
 }
@@ -135,6 +167,45 @@ func (q *Queries) GetUseCaseBySourceKey(ctx context.Context, sourceKey string) (
 	return i, err
 }
 
+const insertAggregateSnapshot = `-- name: InsertAggregateSnapshot :one
+INSERT INTO aggregate_snapshots (
+    id,
+    sync_run_id,
+    source_snapshot_key,
+    imported_at,
+    source_row_count
+) VALUES ($1, $2, $3, $4, $5)
+ON CONFLICT (source_snapshot_key) DO NOTHING
+RETURNING id, sync_run_id, source_snapshot_key, imported_at, source_row_count
+`
+
+type InsertAggregateSnapshotParams struct {
+	ID                pgtype.UUID
+	SyncRunID         pgtype.UUID
+	SourceSnapshotKey string
+	ImportedAt        pgtype.Timestamptz
+	SourceRowCount    int32
+}
+
+func (q *Queries) InsertAggregateSnapshot(ctx context.Context, arg InsertAggregateSnapshotParams) (AggregateSnapshot, error) {
+	row := q.db.QueryRow(ctx, insertAggregateSnapshot,
+		arg.ID,
+		arg.SyncRunID,
+		arg.SourceSnapshotKey,
+		arg.ImportedAt,
+		arg.SourceRowCount,
+	)
+	var i AggregateSnapshot
+	err := row.Scan(
+		&i.ID,
+		&i.SyncRunID,
+		&i.SourceSnapshotKey,
+		&i.ImportedAt,
+		&i.SourceRowCount,
+	)
+	return i, err
+}
+
 type InsertExecutionErrorsParams struct {
 	ID          pgtype.UUID
 	ExecutionID pgtype.UUID
@@ -152,6 +223,29 @@ type InsertExecutionsParams struct {
 	Outcome    string
 	SourceRef  string
 	CreatedAt  pgtype.Timestamptz
+}
+
+type InsertProcessAggregateRowsParams struct {
+	ID                     pgtype.UUID
+	AggregateSnapshotID    pgtype.UUID
+	SyncRunID              pgtype.UUID
+	UseCaseID              pgtype.UUID
+	SourceProcessKey       string
+	ProcessName            string
+	PackageName            string
+	EnvironmentName        pgtype.Text
+	ExecutingCount         int32
+	PendingCount           int32
+	SuspendedCount         int32
+	ResumedCount           int32
+	SuccessfulCount        int32
+	ErrorCount             int32
+	StoppedCount           int32
+	AverageDurationSeconds pgtype.Float8
+	AveragePendingSeconds  pgtype.Float8
+	SourceTotalRows        int32
+	SourceEntityKey        string
+	ImportedAt             pgtype.Timestamptz
 }
 
 const startSyncRun = `-- name: StartSyncRun :one

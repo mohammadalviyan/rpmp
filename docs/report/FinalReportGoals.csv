@@ -1,0 +1,54 @@
+﻿ProcessName;CountSuccessful;CountErrors;CountStopped;Total;Success Rate
+CDD.MSU.LOA.Checker;607;4;0;611;99,35%
+CDD.MSU.LoanOnApp.Signer;499;0;0;499;100,00%
+CDD.MSU.LoanOnPhone.DailyReport;34;0;0;34;100,00%
+CDD.MSU.WaivingChargesandInterestFromCollection.GetDIOandCheck;28;0;0;28;100,00%
+CDD.MSU.WaivingChargesandInterestFromCollection.GetDIOandCheck-BULK;33;0;0;33;100,00%
+CDD.MSU.WaivingChargesandInterestFromCollection.ReCheckAndAddRemark;31;0;0;31;100,00%
+CDD.Replace.Card.M;958;2;0;960;99,79%
+CDD_CR_Daily;38;0;0;38;100,00%
+CDD_CR_IntraDay;157;0;0;157;100,00%
+CDD_CR_Weekly;2;0;0;2;100,00%
+FST Chargeback QRIS;60;51;24;135;44,44%
+FST.ApprovalIPM;82;12;3;97;84,54%
+FST.ApprovalIPMChecker;2;0;0;2;100,00%
+FST.ChargebackQRISRintis;53;5;11;69;76,81%
+ISC_DLP_CDD;13;0;0;13;100,00%
+OPX_VisibilityTools_BRISPOT_RE;42;0;0;42;100,00%
+OPX_VisibilityTools_Brisurf;16;0;0;16;100,00%
+OPX_VisibilityTools_NDS;21;0;0;21;100,00%
+POD Update Database SafeWatch;667;0;0;667;100,00%
+POD.ExportLC.PaymentRegress_POD;28;7;0;35;80,00%
+POD.PaymentRegress.Approver;15;2;0;17;88,24%
+POD.RetryEmailNotifNotaDinasDownloaded;1;0;0;1;100,00%
+POD.SettlementNostroTIPlus.RekonNostro;65;14;11;90;72,22%
+POD.SettlementNostroTIPlus.SettleTIPlus;39;9;35;83;46,99%
+POD.SinkronisasiDataBlackList;120;1;0;121;99,17%
+POD.Tracer.Dispatcher;10;4;1;15;66,67%
+POD.Tracer.Performer;12;0;0;12;100,00%
+POD_SwiftDocumentClassification_Windows;39;0;1;40;97,50%
+SCC.Issuer_QrisOnUsOffUs;202;26;3;231;87,45%
+SCC.Issuer1.ATMTartunTransfer.KOR;87;2;0;89;97,75%
+SCC.Issuer1.ATMTartunTransfer.KOR.DailyReport;31;0;0;31;100,00%
+SCC.PengecekanTransaksiGagal.PLN;104;0;0;104;100,00%
+SCC.UpdatePassword;39;0;0;39;100,00%
+TiPlus-AutoUpdatePassword;31;0;0;31;100,00%
+TRB.ImportLC.Amend.GenerateDailyReport;24;0;0;24;100,00%
+TRB.ImportLC.CreateAmend;1011;0;0;1011;100,00%
+TRB.ImportLC.CreateBNR;301;0;0;301;100,00%
+TRB.ImportLC.DownloadTIPLUSDokumenAmend;577;7;0;584;98,80%
+TRB.ImportLC.UpdateAmend;704;0;0;704;100,00%
+TRB.ImportLC.UploadDocumentToBRITRADEAmend;31;1;0;32;96,88%
+TRB.Issuance.CreateIssuance;1784;0;0;1784;100,00%
+TRB.Issuance.GenerateDailyReport;21;0;0;21;100,00%
+TRB.Issuance.UpdateIssuance;1487;0;0;1487;100,00%
+TRB.MappingThirdPartyID;6;0;3;9;66,67%
+TRB.Report Nota Dinas;29;0;0;29;100,00%
+TRB.TransBanking.AutoApproval.GetListBranch_TRB;376;0;0;376;100,00%
+TRB_MASS_ACCOUNT_REGISTRATION_Process1_TRB;194;29;0;223;87,00%
+TRB_MASS_ACCOUNT_REGISTRATION_Process2_TRB;11;0;0;11;100,00%
+TRB_MASS_ACCOUNT_REGISTRATION_Process3_TRB;14;0;0;14;100,00%
+TRB_Process1_DownloadTIPLUSDokumen;736;34;0;770;95,58%
+TRB_Process2_UploadDocumentToBRITRADE;492;133;0;625;78,72%
+WMG.DailyBillingTelemarketing;26;0;0;26;100,00%
+;11990;11990;11990;11990;93,55%
