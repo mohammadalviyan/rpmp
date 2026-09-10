@@ -83,3 +83,54 @@ func (r iteratorForInsertExecutions) Err() error {
 func (q *Queries) InsertExecutions(ctx context.Context, arg []InsertExecutionsParams) (int64, error) {
 	return q.db.CopyFrom(ctx, []string{"executions"}, []string{"id", "use_case_id", "occurred_at", "outcome", "source_ref", "created_at"}, &iteratorForInsertExecutions{rows: arg})
 }
+
+// iteratorForInsertProcessAggregateRows implements pgx.CopyFromSource.
+type iteratorForInsertProcessAggregateRows struct {
+	rows                 []InsertProcessAggregateRowsParams
+	skippedFirstNextCall bool
+}
+
+func (r *iteratorForInsertProcessAggregateRows) Next() bool {
+	if len(r.rows) == 0 {
+		return false
+	}
+	if !r.skippedFirstNextCall {
+		r.skippedFirstNextCall = true
+		return true
+	}
+	r.rows = r.rows[1:]
+	return len(r.rows) > 0
+}
+
+func (r iteratorForInsertProcessAggregateRows) Values() ([]interface{}, error) {
+	return []interface{}{
+		r.rows[0].ID,
+		r.rows[0].AggregateSnapshotID,
+		r.rows[0].SyncRunID,
+		r.rows[0].UseCaseID,
+		r.rows[0].SourceProcessKey,
+		r.rows[0].ProcessName,
+		r.rows[0].PackageName,
+		r.rows[0].EnvironmentName,
+		r.rows[0].ExecutingCount,
+		r.rows[0].PendingCount,
+		r.rows[0].SuspendedCount,
+		r.rows[0].ResumedCount,
+		r.rows[0].SuccessfulCount,
+		r.rows[0].ErrorCount,
+		r.rows[0].StoppedCount,
+		r.rows[0].AverageDurationSeconds,
+		r.rows[0].AveragePendingSeconds,
+		r.rows[0].SourceTotalRows,
+		r.rows[0].SourceEntityKey,
+		r.rows[0].ImportedAt,
+	}, nil
+}
+
+func (r iteratorForInsertProcessAggregateRows) Err() error {
+	return nil
+}
+
+func (q *Queries) InsertProcessAggregateRows(ctx context.Context, arg []InsertProcessAggregateRowsParams) (int64, error) {
+	return q.db.CopyFrom(ctx, []string{"process_aggregate_rows"}, []string{"id", "aggregate_snapshot_id", "sync_run_id", "use_case_id", "source_process_key", "process_name", "package_name", "environment_name", "executing_count", "pending_count", "suspended_count", "resumed_count", "successful_count", "error_count", "stopped_count", "average_duration_seconds", "average_pending_seconds", "source_total_rows", "source_entity_key", "imported_at"}, &iteratorForInsertProcessAggregateRows{rows: arg})
+}

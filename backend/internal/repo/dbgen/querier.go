@@ -11,16 +11,20 @@ import (
 )
 
 type Querier interface {
+	CountProcessAggregateRowsBySnapshot(ctx context.Context, aggregateSnapshotID pgtype.UUID) (int64, error)
 	CreateAuditEvent(ctx context.Context, arg CreateAuditEventParams) error
 	FinishSyncRun(ctx context.Context, arg FinishSyncRunParams) (SyncRun, error)
+	GetAggregateSnapshotBySourceKey(ctx context.Context, sourceSnapshotKey string) (AggregateSnapshot, error)
 	GetExecutionByID(ctx context.Context, id pgtype.UUID) (Execution, error)
 	GetExecutionErrorByID(ctx context.Context, id pgtype.UUID) (ExecutionError, error)
 	GetSyncRunByID(ctx context.Context, id pgtype.UUID) (SyncRun, error)
 	GetUseCaseBySourceKey(ctx context.Context, sourceKey string) (UseCase, error)
 	GetUserByEmployeeID(ctx context.Context, employeeID string) (User, error)
 	GetUserByID(ctx context.Context, id pgtype.UUID) (User, error)
+	InsertAggregateSnapshot(ctx context.Context, arg InsertAggregateSnapshotParams) (AggregateSnapshot, error)
 	InsertExecutionErrors(ctx context.Context, arg []InsertExecutionErrorsParams) (int64, error)
 	InsertExecutions(ctx context.Context, arg []InsertExecutionsParams) (int64, error)
+	InsertProcessAggregateRows(ctx context.Context, arg []InsertProcessAggregateRowsParams) (int64, error)
 	StartSyncRun(ctx context.Context, arg StartSyncRunParams) (SyncRun, error)
 	UpsertUseCase(ctx context.Context, arg UpsertUseCaseParams) (UseCase, error)
 }

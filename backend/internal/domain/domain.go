@@ -1,6 +1,7 @@
 package domain
 
 import (
+	"context"
 	"errors"
 	"time"
 )
@@ -138,6 +139,52 @@ type SyncRunFinish struct {
 	ErrorCode   *string
 }
 
+type AggregateSnapshot struct {
+	SourceSnapshotKey string
+	ImportedAt        time.Time
+	Rows              []ProcessAggregate
+}
+
+type ProcessAggregate struct {
+	SourceProcessKey       string
+	UseCaseSourceKey       string
+	UseCaseName            string
+	ProcessName            string
+	PackageName            string
+	EnvironmentName        *string
+	ExecutingCount         int32
+	PendingCount           int32
+	SuspendedCount         int32
+	ResumedCount           int32
+	SuccessfulCount        int32
+	ErrorCount             int32
+	StoppedCount           int32
+	AverageDurationSeconds *float64
+	AveragePendingSeconds  *float64
+	SourceTotalRows        int32
+	SourceEntityKey        string
+}
+
+func (r ProcessAggregate) FailureCount() int32 {
+	return r.ErrorCount + r.StoppedCount
+}
+
+type SnapshotPublishResult struct {
+	RowsWritten int32
+	Idempotent  bool
+}
+
+type SyncSession interface {
+	StartSyncRun(context.Context, SyncRunStart) (SyncRun, error)
+	PublishSnapshot(context.Context, string, AggregateSnapshot) (SnapshotPublishResult, error)
+	FinishSyncRun(context.Context, SyncRunFinish) (SyncRun, error)
+	Release(context.Context) error
+}
+
+type SyncSessionFactory interface {
+	TryAcquireSyncSession(context.Context) (SyncSession, bool, error)
+}
+
 type FreshnessStatus string
 
 const FreshnessFresh FreshnessStatus = "fresh"
@@ -208,6 +255,7 @@ const (
 	KindSourceUnavailable  ErrorKind = "source_unavailable"
 	KindInternal           ErrorKind = "internal_error"
 	KindNotFound           ErrorKind = "not_found"
+	KindSyncInProgress     ErrorKind = "sync_in_progress"
 )
 
 type Error struct {

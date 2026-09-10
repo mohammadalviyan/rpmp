@@ -1,0 +1,214 @@
+﻿ProcessId,ProcessName,PackageName,EnvironmentName,FullyQualifiedName,CountExecuting,CountPending,CountSuspended,CountResumed,CountSuccessful,CountErrors,CountStopped,AverageDurationInSeconds,AveragePendingTimeInSeconds,TotalRows,EntityId
+437,[Manual] POD_SwiftDocumentClassification_Windows,POD_SwiftDocumentClassification_Windows,NULL,POD/Incoming Swift,0,0,0,0,0,0,0,NULL,NULL,213,437
+305,ALM.Corefund,ALM.Corefund,NULL,SCC-Main/ALM,0,0,0,0,0,0,0,NULL,NULL,213,305
+304,ALM.NeracaHarian,ALM.NeracaHarian,NULL,SCC-Main/ALM,0,0,0,0,0,0,0,NULL,NULL,213,304
+314,BND.EDCRelocation,BND.EDCRelocation,NULL,BND,0,0,0,0,0,0,0,NULL,NULL,213,314
+315,BND.EDCRelocation,BND.EDCRelocation,NULL,BBD,0,0,0,0,0,0,0,NULL,NULL,213,315
+81,BND.ResetPasswordAgentBRILink,BND.ResetPasswordAgentBRILink,NULL,BBD,0,0,0,0,0,0,0,NULL,NULL,213,81
+82,BND.ResetPasswordAgentBRILink.DailyReport,BND.ResetPasswordAgentBRILink.DailyReport,NULL,BBD,0,0,0,0,0,0,0,NULL,NULL,213,82
+284,BRI_PengkinianDataPadan_CheckStatus,BRI_PengkinianDataPadan_CheckStatus,NULL,EDM-M/Maintenance_Massal,0,0,0,0,0,0,0,NULL,NULL,213,284
+283,BRI_PengkinianDataPadan_UploadDokumen,BRI_PengkinianDataPadan_UploadDokumen,NULL,EDM-M/Maintenance_Massal,0,0,0,0,19,0,113,441,0,213,283
+351,BRI_Project22-01_CriticalReportProcessing,BRI_Project22-01_CriticalReportProcessing,NULL,ASQ,0,0,0,0,0,0,0,NULL,NULL,213,351
+309,Card Closing,BRI_Close_Card,NULL,CDD-M-Replace&CloseCard,0,0,0,0,0,0,0,NULL,NULL,213,309
+310,Card Replacing,BRI_Replace_Card,NULL,CDD-M-Replace&CloseCard,0,0,0,0,0,0,0,NULL,NULL,213,310
+235,CDD - Analysis for Credit Card Application,Analysis.for.Credit.Card.Application,NULL,CDD-M CIN/Verification CC,0,0,0,0,0,0,0,NULL,NULL,213,235
+94,CDD - Analysis for Credit Card Application,Analysis.for.Credit.Card.Application,NULL,CDD-M/CIN-Verification-CC,0,0,0,0,0,0,0,NULL,NULL,213,94
+407,CDD.Biaya.Increase.Limit,CDD.Biaya.Increase.Limit,NULL,CDD-M/CDD-BiayaIncreaseLimit,0,0,0,0,0,0,0,NULL,NULL,213,407
+226,CDD.Close.Card.M,CDD.Close.Card.M,NULL,CDD-Main/CDD-CloseAndReplaceCard,0,0,0,0,0,0,0,NULL,NULL,213,226
+67,CDD.CustService.CreatePDFCloseCC,CDD.CustService.CreatePDFCloseCC,NULL,CDD-M/CS-Closing-Statement,0,0,0,0,0,0,0,NULL,NULL,213,67
+169,CDD.CustService.RetryUploadBRICare,CDD.CustService.RetryUploadBRICare,NULL,CDD-M/CS-Closing-Statement,0,0,0,0,0,0,0,NULL,NULL,213,169
+192,CDD.DailyReportPerformance.BRIGUNA,CDD.DailyReportPerformance.BRIGUNA,NULL,CDD-M/Daily Report,0,0,0,0,0,0,0,NULL,NULL,213,192
+191,CDD.DailyReportPerformance.CC,CDD.DailyReportPerformance.CC,NULL,CDD-M/Daily Report,0,0,0,0,0,0,0,NULL,NULL,213,191
+193,CDD.DailyReportPerformance.KPR,CDD.DailyReportPerformance.KPR,NULL,CDD-M/Daily Report,0,0,0,0,0,0,0,NULL,NULL,213,193
+396,CDD.DRP.RO_Selindo,CDD.DRP.ROSelindo,NULL,CDD-M/DailyReport-RO_Selindo,0,0,0,0,0,0,0,NULL,NULL,213,396
+175,CDD.MaintenanceCIF.CreateTicket,CDD.MaintenanceCIF.CreateTicket,NULL,CDD-M/Maintenance CIF,0,0,0,0,0,0,0,NULL,NULL,213,175
+176,CDD.MaintenanceCIF.UpdateAddress,CDD.MaintenanceCIF.UpdateAddress,NULL,CDD-M/Maintenance CIF,0,0,0,0,0,0,0,NULL,NULL,213,176
+261,CDD.MSU.CicilanBRICare.CreateBRICCReport_CDD,CDD.MSU.CicilanBRICare.CreateBRICCReport,NULL,CDD - FMA - POD-M/CDD,0,0,0,0,0,0,0,NULL,NULL,213,261
+263,CDD.MSU.CicilanBRICare.FormatCPD_CDD,CDD.MSU.CicilanBRICare.FormatCPD,NULL,CDD - FMA - POD-M/CDD,0,0,0,0,0,0,0,NULL,NULL,213,263
+264,CDD.MSU.CicilanBRICare.ReconcileCPDandBRICCReport_CDD,CDD.MSU.CicilanBRICare.ReconcileCPDandBRICCReport,NULL,CDD - FMA - POD-M/CDD,0,0,0,0,0,0,0,NULL,NULL,213,264
+265,CDD.MSU.CicilanBRICare.TicketChecker_CDD,CDD.MSU.CicilanBRICare.TicketChecker,NULL,CDD - FMA - POD-M/CDD,0,0,0,0,0,0,0,NULL,NULL,213,265
+262,CDD.MSU.CicilanBRICare.UploadBRICCReport_CDD,CDD.MSU.CicilanBRICare.UploadBRICCReport,NULL,CDD - FMA - POD-M/CDD,0,0,0,0,0,0,0,NULL,NULL,213,262
+439,CDD.MSU.LOA.Checker,CDD.MSU.LoanOnApp.Checker,NULL,CDD-M/CDD-LoanOnApp,0,0,0,0,607,4,0,824,0,213,439
+167,CDD.MSU.LoanOnApp,CDD.MSU.LoanOnApp,NULL,CDD-M/CDD-LoanOnApp,0,0,0,0,0,0,0,NULL,NULL,213,167
+336,CDD.MSU.LoanOnApp.Signer,CDD.MSU.LoanOnApp.Signer,NULL,CDD-M/CDD-SignerApprovalLOA,0,0,0,0,499,0,0,437,83,213,336
+151,CDD.MSU.LoanOnPhone,CDD.LoanOnPhone,NULL,CDD-M/CDD-LoanOnPhone,0,0,0,0,0,0,0,NULL,NULL,213,151
+153,CDD.MSU.LoanOnPhone.DailyReport,CDD.MSU.LoanOnPhone.DailyReport,NULL,CDD-M/CDD-LoanOnPhone,0,0,0,0,0,0,0,NULL,NULL,213,153
+168,CDD.MSU.LoanOnPhone.DailyReport,CDD.MSU.LoanOnPhone.DailyReport,NULL,CDD-M/CDD-LoanOnApp,0,0,0,0,34,0,0,26,0,213,168
+236,CDD.MSU.WaivingChargesandInterestFromCollection.GetDIOandCheck,CDD.MSU.WaivingChargesandInterestFromCollection.GetDIOandCheck,NULL,CDD-M/CDD-Waiving Fee Collection,0,0,0,0,28,0,0,52,0,213,236
+418,CDD.MSU.WaivingChargesandInterestFromCollection.GetDIOandCheck-BULK,CDD.MSU.WaivingChargesandInterestFromCollection.GetDIOandCheck-BULK,NULL,CDD-M/CDD-Waiving Fee Collection,0,0,0,0,33,0,0,99,0,213,418
+238,CDD.MSU.WaivingChargesandInterestFromCollection.ReCheckAndAddRemark,CDD.MSU.WaivingChargesandInterestFromCollection.ReCheckAndAddRemark,NULL,CDD-M/CDD-Waiving Fee Collection,0,0,0,0,31,0,0,50,0,213,238
+237,CDD.MSU.WaivingChargesandInterestFromCollection.UploadSPT,CDD.MSU.WaivingChargesandInterestFromCollection.UploadSPT,NULL,CDD-M/CDD-Waiving Fee Collection,0,0,0,0,0,23,0,162,0,213,237
+186,CDD.MSU.WaivingInstallmentCancellationCall,CDD.MSU.WaivingInstallmentCancellationCall,NULL,CDD-M/CDD-MSU-Preterminated,0,0,0,0,0,0,0,NULL,NULL,213,186
+227,CDD.Replace.Card.M,CDD.Replace.Card.M,NULL,CDD-Main/CDD-CloseAndReplaceCard,0,0,0,0,958,2,0,32,0,213,227
+184,CDD.ReportDailyCetakKartu,CDD.ReportDailyCetakKartu,NULL,CDD-ReportDailyCetakKartu,0,0,0,0,0,0,0,NULL,NULL,213,184
+198,CDD.WaivingAnnualFee,CDD.WaivingAnnualFee,NULL,CDD-M/CDD-WaivingAnnualFee,0,0,0,0,0,0,0,NULL,NULL,213,198
+200,CDD.WaivingAnnualFee.DailyReport,CDD.WaivingAnnualFee.DailyReport,NULL,CDD-M/CDD-WaivingAnnualFee,0,0,0,0,0,0,0,NULL,NULL,213,200
+201,CDD.WaivingAnnualFee.UploadSPT,CDD.WaivingAnnualFee.UploadSPT,NULL,CDD-M/CDD-WaivingAnnualFee,0,0,0,0,0,0,0,NULL,NULL,213,201
+161,CDD_CR_Daily,CDD_CR_Daily,NULL,CDD-M/Critical Report,0,0,0,0,38,0,0,1075,23,213,161
+162,CDD_CR_IntraDay,CDD_CR_IntraDay,NULL,CDD-M/Critical Report,0,0,0,0,157,0,0,1212,123,213,162
+160,CDD_CR_Weekly,CDD_CR_Weekly,NULL,CDD-M/Critical Report,0,0,0,0,2,0,0,472,1,213,160
+203,CDD-MSU-WaivingInstallmentCancellationCall.DailyReport,CDD-MSU-WaivingInstallmentCancellationCall.DailyReport,NULL,CDD-M/CDD-MSU-Preterminated,0,0,0,0,0,0,0,NULL,NULL,213,203
+298,Change_inProgress_State_SCC,Change_inProgress_State,NULL,SCC-Main/SCC.CCD.PengecekanGagalTarikTunai,0,0,0,0,0,0,0,NULL,NULL,213,298
+247,Change_inProgress_State_TRB,Change_inProgress_State,NULL,TRB-FMA-M/TRB,0,0,0,0,0,0,0,NULL,NULL,213,247
+431,check,checkya,NULL,CDD-Main/CDD-CloseAndReplaceCard,0,0,0,0,0,0,0,NULL,NULL,213,431
+83,Daily Process Incident Log Application,DRD.IncidentApplicationReporting.DailyProcess,NULL,DRD/Incident Application Reporting,0,0,0,0,0,0,0,NULL,NULL,213,83
+85,Daily Process Incident Log Network,DRD.IncidentNetworkReporting.DailyReport,NULL,DRD/Incident Network Reporting,0,0,0,0,0,0,0,NULL,NULL,213,85
+271,Dashboard Kurs KMK,ReportEarlyWarningSistem.GetKursKMKDashboard,NULL,TRB-FMA-M/FMA,0,0,0,0,0,0,0,NULL,NULL,213,271
+278,Dashboard Reversal Other Bank,DashboardReversalOtherBank,NULL,IT-OPS-M,0,0,0,0,0,0,0,NULL,NULL,213,278
+346,Dashboard Voice V26,DashboardVoiceContactBRI_Windows,NULL,POD/Robot2,0,0,0,0,0,0,0,NULL,NULL,213,346
+141,DDB.AssignTicketHelpdesk,DDB.AssignTicket_v2,NULL,DDB/Assign Ticket,0,0,0,0,0,0,0,NULL,NULL,213,141
+39,DDB.CashoutPendingG,DDB.CashoutPendingG,NULL,DDB,0,0,0,0,0,0,0,NULL,NULL,213,39
+38,DDB.EODCeria,DDB.EODCeria,NULL,DDB,0,0,0,0,0,0,0,NULL,NULL,213,38
+424,DDB.HourlyMonitoringEcosystem.CBMerror,EcoOps-Bot-HourlyReport-CBM-error,NULL,DDB/Hourly Monitoring,0,0,0,0,0,0,0,NULL,NULL,213,424
+164,DDB.HourlyMonitoringEcosystem2,DDB.HourlyMonitoringEcosystem2,NULL,DDB/Hourly Monitoring,0,0,0,0,0,0,0,NULL,NULL,213,164
+291,DRD.ApplicationIncidentDataFeeding.DailyProcess,DRD.Archer,NULL,DRD/Archer Incident Application Reporting,0,0,0,0,0,0,0,NULL,NULL,213,291
+313,DRD.ApplicationIncidentDataFeeding.FlagingDataMerge,DRD.Archer,NULL,DRD/Archer Incident Application Reporting,0,0,0,0,0,0,0,NULL,NULL,213,313
+292,DRD.ApplicationIncidentDataFeeding.WeeklyProcessNew,DRD.Archer,NULL,DRD/Archer Incident Application Reporting,0,0,0,0,0,0,0,NULL,NULL,213,292
+293,DRD.ApplicationIncidentDataFeeding.WeeklyProcessUpdated,DRD.Archer,NULL,DRD/Archer Incident Application Reporting,0,0,0,0,0,0,0,NULL,NULL,213,293
+364,DRD_IncidentLogIRIStoArcher,DRD_IncidentLogIRIStoArcher,NULL,DRD/IRIS_IncidentReporting,0,0,0,0,0,0,0,NULL,NULL,213,364
+379,DRD_IncidentLogIRIStoArcher_DailyUpdate,DRD_IncidentLogIRIStoArcher,NULL,DRD/IRIS_IncidentReporting,0,0,0,0,0,0,0,NULL,NULL,213,379
+384,ecosystemHourlyMonitoring,DDB.HourlyMonitoringEcosystemNew,NULL,DDB/zDigiBot,0,0,0,0,0,0,0,NULL,NULL,213,384
+389,EcosystemOperation.HourlyMonitoring,EcosystemOperation.HourlyMonitoring,NULL,DDB/Hourly Monitoring,0,0,0,0,0,0,0,NULL,NULL,213,389
+410,EcosystemOperation.HourlyMonitoring2,EcosystemOperation.HourlyMonitoring2,NULL,DDB/Hourly Monitoring,0,0,0,0,0,0,0,NULL,NULL,213,410
+408,EcosystemOperation.HourlyRundeckMonitoring,EcosystemOperation.RundeckMonitoring,NULL,DDB/Hourly Monitoring,0,0,0,0,0,0,0,NULL,NULL,213,408
+303,EDM.DSA.TunggalisasiDataMassal,EDM.DSA.TunggalisasiDataMassal,NULL,SCC-Main/EDM,0,0,0,0,0,0,0,NULL,NULL,213,303
+59,EOD_PreprodCeria,EOD_PreprodCeria,NULL,DDB,0,0,0,0,0,0,0,NULL,NULL,213,59
+12,Extraction_Prod,Extraction_Prod,NULL,POD/Robot3,0,0,0,0,0,0,0,NULL,NULL,213,12
+19,Extraction_Prod,Extraction_Prod,NULL,POD/Robot1,0,0,0,0,0,0,0,NULL,NULL,213,19
+406,Feeding Data BSA,VAD.FeedingDataBSA,NULL,VAD,0,0,0,0,0,0,0,NULL,NULL,213,406
+267,FMA.MonitoringPelaporanPajak_FMA,FMA.MonitoringPelaporanPajak,NULL,CDD - FMA - POD-M/FMA,0,0,0,0,0,0,0,NULL,NULL,213,267
+269,FMA.SupportMonitoringPelaporanPajak.MonitoringPelaporan_FMA,FMA.SupportMonitoringPelaporanPajak.MonitoringPelaporan,NULL,CDD - FMA - POD-M/FMA,0,0,0,0,0,0,0,NULL,NULL,213,269
+268,FMA.SupportMonitoringPelaporanPajak.ReconTax_FMA,FMA.SupportMonitoringPelaporanPajak.ReconTax,NULL,CDD - FMA - POD-M/FMA,0,0,0,0,0,0,0,NULL,NULL,213,268
+256,FMA.TaxReportSummary_FMA,FMA.TaxReportSummary,NULL,TRB-FMA-M/FMA,0,0,0,0,0,0,0,NULL,NULL,213,256
+362,FST Chargeback QRIS,FST.Chargeback.QRIS,NULL,RPT/FST.ChargebackQRIS,0,0,0,0,60,51,24,1900,0,213,362
+397,FST.ApprovalIPM,FST-Approval.IPM,NULL,RPT/FST.ApprovalIPM,0,0,0,0,82,12,3,2066,8,213,397
+398,FST.ApprovalIPMChecker,FST-Approval.IPM.Checker,NULL,RPT/FST.ApprovalIPM,0,0,0,0,2,0,0,2908,0,213,398
+432,FST.ChargebackQRISRintis,FST.ChargebackQRISRintis,NULL,RPT/FST.ChargebackQRISRintis,0,0,0,0,53,5,11,2806,0,213,432
+403,FST.RekonMasterCard,FST.RekonMastercard,NULL,FST/Rekonsiliasi-Data-RE,0,0,0,0,0,0,0,NULL,NULL,213,403
+405,FST.RekonSettlement,FST.RekonSettlement,NULL,FST/Rekonsiliasi-Data-RE,0,0,0,0,0,0,0,NULL,NULL,213,405
+401,FST.RekonVisa,FST.RekonVisa,NULL,FST/Rekonsiliasi-Data-RE,0,0,0,0,0,0,0,NULL,NULL,213,401
+373,HCBP -  Pendaftaran BPJS,HCBP-PedaftaranBPJS,NULL,HCBP-M/HCBP-PendaftaranPenonaktifanBPJS,0,0,0,0,0,0,0,NULL,NULL,213,373
+372,HCBP - Penonaktifan BPJS,HCBP-PenonaktifanBPJS,NULL,HCBP-M/HCBP-PendaftaranPenonaktifanBPJS,0,0,0,0,0,0,0,NULL,NULL,213,372
+6,InputTiplus_Prod,InputTiPlus_Prod,NULL,POD/Robot1,0,0,0,0,0,0,0,NULL,NULL,213,6
+13,InputTiplus_Prod,InputTiPlus_Prod,NULL,POD/Robot3,0,0,0,0,0,0,0,NULL,NULL,213,13
+266,ISC_DLP_CDD,ISC_DLP,NULL,CDD - FMA - POD-M/CDD,0,0,0,0,13,0,0,26,2534,213,266
+377,Monitoring SLIK Notification & Alert,OPX.MonitoringSlikGrafanaNotification,NULL,OPX,0,0,0,0,0,0,0,NULL,NULL,213,377
+378,Monitoring SLIK Report,OPX.MonitoringSlikGrafanaReport,NULL,OPX,0,0,0,0,0,0,0,NULL,NULL,213,378
+435,OPX_VisibilityTools_BRISPOT_RE,OPX_VisibilityTools_BRISPOT_RE,NULL,OPX/OPX.VisibilityTools,0,0,0,0,42,0,0,432,92,213,435
+428,OPX_VisibilityTools_Brisurf,OPX_VisibilityTools_Brisurf,NULL,OPX/OPX.VisibilityTools,0,0,0,0,16,0,0,62,326,213,428
+427,OPX_VisibilityTools_NDS,OPX_VisibilityTools_NDS,NULL,OPX/OPX.VisibilityTools,0,0,0,0,21,0,0,49,398,213,427
+357,Penarikan EJ Log,POD-PenarikanEJLog,NULL,POD/Penarikan EJ Logs,0,0,0,0,0,0,0,NULL,NULL,213,357
+319,Pengajuan.SBUM,Pengajuan.SBUM,NULL,CDD-Main/CDD-SBUM,0,0,0,0,0,0,0,NULL,NULL,213,319
+166,POD Update Database SafeWatch,POD.UpdateDatabaseSafeWatch,NULL,POD/Update-SafeWatch,0,0,0,0,667,0,0,182,3,213,166
+270,POD.ExportLC.PaymentRegress_POD,POD.ExportLC.PaymentRegress,NULL,CDD - FMA - POD-M/POD,0,0,0,0,28,7,0,906,7218,213,270
+417,POD.PaymentRegress.Approver,POD.PaymentRegress.Approver,NULL,CDD - FMA - POD-M/POD,0,0,0,0,15,2,0,1362,7,213,417
+107,POD.RetryEmailNotifNotaDinasDownloaded,POD.RetryEmailNotifNotaDinasDownloaded,NULL,POD/Proceed Settlements,0,0,0,0,1,0,0,9,0,213,107
+62,POD.SettlementNostroTIPlus.RekonNostro,POD.SettlementNostroTIPlus.RekonNostro,NULL,POD/Proceed Settlements,0,0,0,0,65,14,11,3357,4602,213,62
+63,POD.SettlementNostroTIPlus.SettleTIPlus,POD.SettlementNostroTIPlus.SettleTIPlus,NULL,POD/Proceed Settlements,0,0,0,0,39,9,35,9338,3220,213,63
+433,POD.SinkronisasiDataBlackList,POD.SinkronisasiDataBlackList,NULL,POD/Update-SafeWatch,0,0,0,0,120,1,0,78,96,213,433
+413,POD.Tracer.Dispatcher,POD.Tracer.Dispatcher,NULL,CDD - FMA - POD-M/POD,0,0,0,0,10,4,1,14174,8978,213,413
+414,POD.Tracer.Performer,POD.Tracer.Performer,NULL,CDD - FMA - POD-M/POD,0,0,0,0,12,0,0,1511,76,213,414
+223,POD_SwiftDocumentClassification,POD_SwiftDocumentClassification,NULL,POD/Incoming Swift,0,0,0,0,0,0,0,NULL,NULL,213,223
+338,POD_SwiftDocumentClassification,POD_SwiftDocumentClassification,NULL,DDB/zDigiBot,0,0,0,0,0,0,0,NULL,NULL,213,338
+400,POD_SwiftDocumentClassification_Windows,POD_SwiftDocumentClassification_Windows,NULL,POD/Incoming Swift,0,0,0,0,39,0,1,3206,6,213,400
+365,POD_SwiftDocumentClassification_Windows,POD_SwiftDocumentClassification_Windows,NULL,POD/Incoming Swift Temp,0,0,0,0,0,0,0,NULL,NULL,213,365
+361,Process Dio,Process.Dio,NULL,RPT/FST.InputDio,0,0,0,0,0,0,0,NULL,NULL,213,361
+359,publish_package_HA_test,publish_package_HA_test,NULL,POD/Incoming Swift,0,0,0,0,0,0,0,NULL,NULL,213,359
+358,publish_package_HA_test,publish_package_HA_test,NULL,ISG,0,0,0,0,0,0,0,NULL,NULL,213,358
+254,ReportEarlyWarningSistem,ReportEarlyWarningSistem,NULL,TRB-FMA-M/FMA,0,0,0,0,0,0,0,NULL,NULL,213,254
+253,ReportEarlyWarningSistem.GenerateFilesForKanwil,ReportEarlyWarningSistem.GenerateFilesForKanwil,NULL,TRB-FMA-M/FMA,0,0,0,0,0,0,0,NULL,NULL,213,253
+255,ReportEarlyWarningSistem.GetKursKMK,ReportEarlyWarningSistem.GetKursKMK,NULL,TRB-FMA-M/FMA,0,0,0,0,0,0,0,NULL,NULL,213,255
+312,ReportEWSTP.CleanUpFiles,ReportEarlyWarningSistem.CleanUpFiles,NULL,TRB-FMA-M/FMA,0,0,0,0,0,0,0,NULL,NULL,213,312
+46,RPA ISG Notification ncm,RPA_ISG,NULL,ISG,0,0,0,0,0,0,0,NULL,NULL,213,46
+279,RPA.SDKMANUAL_Env_IT-OPS,RPA.SDKMANUAL,NULL,IT-OPS-M,0,0,0,0,0,0,0,NULL,NULL,213,279
+92,RPT.UnbalanceCardlink,Unbalance.Cardlink,NULL,RPT,0,0,0,0,0,0,0,NULL,NULL,213,92
+440,SCC - Pengecekan Transaksi Gagal untuk PLN,SCC.PengecekanTransaksiGagal.PLN,NULL,SCC-PLN,0,0,0,0,0,0,0,NULL,NULL,213,440
+272,SCC.Automasi.Ticket.CRS,SCC.Automasi.Ticket.CRS,NULL,POD/Robot3,0,0,0,0,0,0,0,NULL,NULL,213,272
+281,SCC.Automasi.Ticket.CRS_TEMP,SCC.Automasi.Ticket.CRS,NULL,IT-OPS-M,0,0,0,0,0,0,0,NULL,NULL,213,281
+295,SCC.CCD.PengecekanGagalTarikTunai.DailyReport,SCC.CCD.PengecekanGagalTarikTunai.DailyReport,NULL,SCC-Main/SCC.CCD.PengecekanGagalTarikTunai,0,0,0,0,0,0,0,NULL,NULL,213,295
+307,SCC.CCD.PengecekanGagalTarikTunai.DailyReportMakerOnUs,SCC.CCD.PengecekanGagalTarikTunai.DailyReportMakerOnUs,NULL,SCC-Main/SCC.CCD.PengecekanGagalTarikTunaiMakerOnUs,0,0,0,0,0,0,0,NULL,NULL,213,307
+302,SCC.CCD.PengecekanGagalTarikTunai.DailyReportReject,SCC.CCD.PengecekanGagalTarikTunai.DailyReportReject,NULL,SCC-Main/SCC.CCD.PengecekanGagalTarikTunai,0,0,0,0,0,0,0,NULL,NULL,213,302
+296,SCC.CCD.PengecekanGagalTarikTunai.Dispatcher,SCC.CCD.PengecekanGagalTarikTunai.Dispatcher,NULL,SCC-Main/SCC.CCD.PengecekanGagalTarikTunai,0,0,0,0,0,0,0,NULL,NULL,213,296
+299,SCC.CCD.PengecekanGagalTarikTunai.DispatcherRejectTicket,SCC.CCD.PengecekanGagalTarikTunai.DispatcherRejectTicket,NULL,SCC-Main/SCC.CCD.PengecekanGagalTarikTunai,0,0,0,0,0,0,0,NULL,NULL,213,299
+300,SCC.CCD.PengecekanGagalTarikTunai.DispatcherRetryTicket,SCC.CCD.PengecekanGagalTarikTunai.DispatcherRetryTicket,NULL,SCC-Main/SCC.CCD.PengecekanGagalTarikTunai,0,0,0,0,0,0,0,NULL,NULL,213,300
+306,SCC.CCD.PengecekanGagalTarikTunai.MakerOnUs,SCC.CCD.PengecekanGagalTarikTunai.MakerOnUs,NULL,SCC-Main/SCC.CCD.PengecekanGagalTarikTunaiMakerOnUs,0,0,0,0,0,0,0,NULL,NULL,213,306
+294,SCC.CCD.PengecekanGagalTarikTunai.Performer,SCC.CCD.PengecekanGagalTarikTunai.Performer,NULL,SCC-Main/SCC.CCD.PengecekanGagalTarikTunai,0,0,0,0,0,0,0,NULL,NULL,213,294
+301,SCC.CCD.PengecekanGagalTarikTunai.RejectToLayanan,SCC.CCD.PengecekanGagalTarikTunai.RejectToLayanan,NULL,SCC-Main/SCC.CCD.PengecekanGagalTarikTunai,0,0,0,0,0,0,0,NULL,NULL,213,301
+385,SCC.Issuer_QrisOnUsOffUs,SCC.Issuer_QrisOnUsOffUs,NULL,SCC-M/SCC.Issuer_QrisOnUsOffUs,0,0,0,0,202,26,3,24023,606,213,385
+229,SCC.Issuer1.ATMTartunTransfer.KOR,SCC.Issuer1.ATMTartunTransfer,NULL,SCC-M/TF Bank Lain - BI Fast,0,0,0,0,87,2,0,22847,10217,213,229
+347,SCC.Issuer1.ATMTartunTransfer.KOR.DailyReport,SCC.Issuer1.ATMTartunTransfer.KOR.DailyReport,NULL,SCC-M/TF Bank Lain - BI Fast,0,0,0,0,31,0,0,26,17452,213,347
+230,SCC.Issuer1.ATMTartunTransfer.Rekon,SCC.Issuer1.ATMTartunTransfer,NULL,SCC-M/TF Bank Lain - BI Fast,0,0,0,0,0,0,0,NULL,NULL,213,230
+349,SCC.NotifikasiBAOUkerVendor,SCC.NotifikasiBAOUkerVendor,NULL,SCC-M/SCC-PemenuhanDataKomplain,0,0,0,0,0,0,0,NULL,NULL,213,349
+350,SCC.NUV.BAOCCTVEJLOG,SCC.NUV.BAOCCTVEJLOG,NULL,SCC-M/SCC-PemenuhanDataKomplain,0,0,0,0,0,0,0,NULL,NULL,213,350
+228,SCC.PengecekanTransaksiGagal.PLN,SCC.PengecekanTransaksiGagal.PLN,NULL,SCC-M/PLN,0,0,0,0,104,0,0,408,83,213,228
+239,SCC.PTG.BRIVA,SCC.PengecekanTransaksiGagal.BRIVA,NULL,SCC-M/BRIVA - Pulsa,0,0,0,0,0,0,0,NULL,NULL,213,239
+241,SCC.PTG.DailyReport,SCC.PengecekanTransaksiGagal.DailyReport,NULL,SCC-M/BRIVA - Pulsa,0,0,0,0,0,0,0,NULL,NULL,213,241
+240,SCC.PTG.PULSA,SCC.PengecekanTransaksiGagal.PULSA,NULL,SCC-M/BRIVA - Pulsa,0,0,0,0,0,0,0,NULL,NULL,213,240
+421,SCC.UpdatePassword,SCC.UpdatePassword,NULL,SCC-M/SCC.UpdatePassword,0,0,0,0,39,0,0,2468,423,213,421
+282,SCC_AutomasiTiketOutgoing-CRS,SCC_AutomasiTiketOutgoing-CRS,NULL,IT-OPS-M,0,0,0,0,0,0,0,NULL,NULL,213,282
+273,SCC_AutomasiTiketOutgoing-CRS,SCC_AutomasiTiketOutgoing-CRS,NULL,POD/Robot3,0,0,0,0,0,0,0,NULL,NULL,213,273
+323,SCC_AutomasiTiketOutgoing-CRS,SCC_AutomasiTiketOutgoing-CRS,NULL,POD/Robot1,0,0,0,0,0,0,0,NULL,NULL,213,323
+342,Test Telegram API,Test.Telegram,NULL,RPT/FST.ChargebackQRIS,0,0,0,0,0,0,0,NULL,NULL,213,342
+341,Test.Delay,Test.Delay,NULL,CDD-M/CDD-SignerApprovalLOA,0,0,0,0,0,0,0,NULL,NULL,213,341
+429,Test.Delay,Test.Delay,NULL,OPX/OPX.VisibilityTools,0,0,0,0,0,0,0,NULL,NULL,213,429
+392,Test.Delay,Test.Delay,NULL,SCC-M/SCC.Issuer_QrisOnUsOffUs,0,0,0,0,0,0,0,NULL,NULL,213,392
+48,Test.Delay,Test.Delay,NULL,ISG,0,0,0,0,0,0,0,NULL,NULL,213,48
+43,Test.Delay,Test.Delay,NULL,POD/Update-SafeWatch,0,0,0,0,0,0,0,NULL,NULL,213,43
+91,Test.Delay,Test.Delay,NULL,DRD/Incident Application Reporting,0,0,0,0,0,0,0,NULL,NULL,213,91
+212,Test.Delay,Test.Delay,NULL,DDB/zDigiBot,0,0,0,0,0,0,0,NULL,NULL,213,212
+211,Test.Delay,Test.Delay,NULL,CDD-ReportDailyCetakKartu,0,0,0,0,0,0,0,NULL,NULL,213,211
+404,Test.Delay,Test.Delay,NULL,CDD - FMA - POD-M/POD,0,0,0,0,0,0,0,NULL,NULL,213,404
+297,Test.Delay_SCC.CCD.PengecekanGagalTarikTunai.Environment,Test.Delay,NULL,SCC-Main/SCC.CCD.PengecekanGagalTarikTunai,0,0,0,0,0,0,0,NULL,NULL,213,297
+95,Test.DRD.IncidentApplicationReporting.DailyProcess,Test.DRD.IncidentApplicationReporting.DailyProcess,NULL,DRD/Incident Application Reporting,0,0,0,0,0,0,0,NULL,NULL,213,95
+402,test.email,test.email,NULL,POD/Update-SafeWatch,0,0,0,0,0,0,0,NULL,NULL,213,402
+344,test.email,test.email,NULL,POD/Proceed Settlements,0,0,0,0,0,0,0,NULL,NULL,213,344
+436,test.email,test.email,NULL,CDD - FMA - POD-M/POD,0,0,0,0,0,0,0,NULL,NULL,213,436
+380,test.email,test.email,NULL,POD/Incoming Swift,0,0,0,0,0,0,0,NULL,NULL,213,380
+343,test.email,test.email,NULL,CDD-M/CDD-SignerApprovalLOA,0,0,0,0,0,0,0,NULL,NULL,213,343
+332,test.email,test.email,NULL,TRB.Issuance/TRB.ImportLC,0,0,0,0,0,0,0,NULL,NULL,213,332
+320,Test.Email,test.email,NULL,TRB/TRB.ReportNotaDinas,0,0,0,0,0,0,0,NULL,NULL,213,320
+388,test.email,test.email,NULL,OPX,0,0,0,0,0,0,0,NULL,NULL,213,388
+387,test.get.email,test.get.email,NULL,OPX,0,0,0,0,0,0,0,NULL,NULL,213,387
+399,test.get.email,test.get.email,NULL,POD/Incoming Swift,0,0,0,0,0,0,0,NULL,NULL,213,399
+316,test.login,test.login,NULL,CDD-M CIN/Verification CC,0,0,0,0,0,0,0,NULL,NULL,213,316
+391,Test-Project,Test-Project,NULL,SCC-M/SCC.Issuer_QrisOnUsOffUs,0,0,0,0,0,0,0,NULL,NULL,213,391
+434,TestSendEmail,TestSendEmail,NULL,SCC-M/BRIVA - Pulsa,0,0,0,0,0,0,0,NULL,NULL,213,434
+156,testTRBIss,testTRBIss,NULL,TRB.Issuance,0,0,0,0,0,0,0,NULL,NULL,213,156
+420,TiPlus-AutoUpdatePassword,TiPlus-AutoUpdatePassword,NULL,TIPlusAutoUpdateCredential,0,0,0,0,31,0,0,25,7859,213,420
+415,TRB.ClaimReceived.Create,TRB.ClaimReceived.Create,NULL,TRB.Issuance/TRB.ClaimReceived,0,0,0,0,0,0,0,NULL,NULL,213,415
+416,TRB.ClaimReceived.Import,TRB.ClaimReceived.Import,NULL,TRB.Issuance/TRB.ClaimReceived,0,0,0,0,0,0,0,NULL,NULL,213,416
+337,TRB.ImportLC.Amend.GenerateDailyReport,TRB.ImportLC.GenerateDailyReport,NULL,TRB.Issuance/TRB.ImportLC,0,0,0,0,24,0,0,56,52,213,337
+327,TRB.ImportLC.CreateAmend,TRB.ImportLC.CreateAmend,NULL,TRB.Issuance/TRB.ImportLC,0,0,0,0,1011,0,0,45,7,213,327
+331,TRB.ImportLC.CreateBNR,TRB.ImportLC.CreateBNR,NULL,TRB.Issuance/TRB.ImportLC,0,0,0,0,301,0,0,60,86,213,331
+329,TRB.ImportLC.DownloadTIPLUSDokumenAmend,TRB.ImportLC.DownloadTIPLUSDokumenAmend,NULL,TRB.Issuance/TRB.ImportLC,0,0,0,0,577,7,0,23,68,213,329
+328,TRB.ImportLC.UpdateAmend,TRB.ImportLC.UpdateAmend,NULL,TRB.Issuance/TRB.ImportLC,0,0,0,0,704,0,0,28,50,213,328
+330,TRB.ImportLC.UploadDocumentToBRITRADEAmend,TRB.ImportLC.UploadDocumentToBRITRADEAmend,NULL,TRB.Issuance/TRB.ImportLC,0,0,0,0,31,1,0,94,0,213,330
+158,TRB.Issuance.CreateIssuance,TRB.Issuance.CreateIssuance,NULL,TRB.Issuance,0,0,0,0,1784,0,0,35,60,213,158
+135,TRB.Issuance.GenerateDailyReport,TRB.Issuance.GenerateDailyReport,NULL,TRB.Issuance,0,0,0,0,21,0,0,12,24,213,135
+159,TRB.Issuance.UpdateIssuance,TRB.Issuance.UpdateIssuance,NULL,TRB.Issuance,0,0,0,0,1487,0,0,30,64,213,159
+318,TRB.MappingThirdPartyID,TRB.MappingThirdPartyID,NULL,TRB/Mapping Third Party ID,0,0,0,0,6,0,3,23,148,213,318
+321,TRB.Report Nota Dinas,TRB.ReportNotaDinas,NULL,TRB/TRB.ReportNotaDinas,0,0,0,0,29,0,0,114,25,213,321
+245,TRB.TransBanking.AutoApproval.ApproveMandate_TRB,TRB.TransBanking.AutoApproval.ApproveMandate,NULL,TRB-FMA-M/TRB,0,0,0,0,0,0,0,NULL,NULL,213,245
+244,TRB.TransBanking.AutoApproval.AuthorizeCheckerMandateandUploadCounterparty_TRB,TRB.TransBanking.AutoApproval.AuthorizeCheckerMandateandUploadCounterparty,NULL,TRB-FMA-M/TRB,0,0,0,0,0,473,0,71,7,213,244
+246,TRB.TransBanking.AutoApproval.AuthorizeCounter_TRB,TRB.TransBanking.AutoApproval.AuthorizeCounter,NULL,TRB-FMA-M/TRB,0,0,0,0,0,0,0,NULL,NULL,213,246
+243,TRB.TransBanking.AutoApproval.GetListBranch_TRB,TRB.TransBanking.AutoApproval.GetListBranch,NULL,TRB-FMA-M/TRB,0,0,0,0,376,0,0,22,38,213,243
+251,TRB_MASS_ACCOUNT_REGISTRATION_AddQueueToRunProcess2_TRB,TRB_MASS_ACCOUNT_REGISTRATION_AddQueueToRunProcess2,NULL,TRB-FMA-M/TRB,0,0,0,0,0,0,0,NULL,NULL,213,251
+252,TRB_MASS_ACCOUNT_REGISTRATION_AddQueueToRunProcess3_TRB,TRB_MASS_ACCOUNT_REGISTRATION_AddQueueToRunProcess3,NULL,TRB-FMA-M/TRB,0,0,0,0,0,0,0,NULL,NULL,213,252
+250,TRB_MASS_ACCOUNT_REGISTRATION_Process1_TRB,TRB_MASS_ACCOUNT_REGISTRATION_Process1,NULL,TRB-FMA-M/TRB,0,0,0,0,194,29,0,110,12,213,250
+248,TRB_MASS_ACCOUNT_REGISTRATION_Process2_TRB,TRB_MASS_ACCOUNT_REGISTRATION_Process2,NULL,TRB-FMA-M/TRB,0,0,0,0,11,0,0,368,0,213,248
+249,TRB_MASS_ACCOUNT_REGISTRATION_Process3_TRB,TRB_MASS_ACCOUNT_REGISTRATION_Process3,NULL,TRB-FMA-M/TRB,0,0,0,0,14,0,0,106,0,213,249
+360,TRB_MASS_ACCOUNT_REGISTRATION_ReGenerate,TRB_MASS_ACCOUNT_REGISTRATION_ReGenerate,NULL,TRB-FMA-M/TRB,0,0,0,0,0,0,0,NULL,NULL,213,360
+196,TRB_Process1_DownloadTIPLUSDokumen,TRB_Process1_DownloadTIPLUSDokumen,NULL,TRB.Issuance/Issuance Download and Upload Documents,0,0,0,0,736,34,0,125,44,213,196
+214,TRB_Process2_UploadDocumentToBRITRADE,TRB_Process2_UploadDocumentToBRITRADE,NULL,TRB.Issuance/Issuance Download and Upload Documents,0,0,0,0,492,133,0,61,64,213,214
+275,UC01_HttpMonitoring_Env_IT-OPS,UC01_HttpMonitoring,NULL,IT-OPS-M,0,0,0,0,0,0,0,NULL,NULL,213,275
+274,UC05_DbDashboardMonitoring_Env_IT-OPS,UC05_DbDashboardMonitoring,NULL,IT-OPS-M,0,0,0,0,0,0,0,NULL,NULL,213,274
+154,Unbalance Excel,Unbalance.Excel,NULL,RPT,0,0,0,0,0,0,0,NULL,NULL,213,154
+276,UseCase2-DashboardAnomalyStatusReporting_Env_IT-OPS,UseCase2-DashboardAnomalyStatusReporting,NULL,IT-OPS-M,0,0,0,0,0,0,0,NULL,NULL,213,276
+277,UseCase3-AlertingAnomalyStatusThroughWhatsApp_Env_IT-OPS,UseCase3-AlertingAnomalyStatusThroughWhatsApp,NULL,IT-OPS-M,0,0,0,0,0,0,0,NULL,NULL,213,277
+280,Usecase4-TelegramtoWhatsapp,TelegramToWhatsApp,NULL,IT-OPS-M,0,0,0,0,0,0,0,NULL,NULL,213,280
+84,Weekly Incident Log Data Application,DRD.IncidentApplicationReporting.WeeklyProcess,NULL,DRD/Incident Application Reporting,0,0,0,0,0,0,0,NULL,NULL,213,84
+86,Weekly Incident Log Data Network,DRD.IncidentNetworkReporting.WeeklyReport,NULL,DRD/Incident Network Reporting,0,0,0,0,0,0,0,NULL,NULL,213,86
+311,Whatsapp Verification,WhatsappVerification,NULL,CDD-M-Replace&CloseCard,0,0,0,0,0,0,0,NULL,NULL,213,311
+185,WMG.DailyBillingTelemarketing,WMG.DailyBillingTelemarketing,NULL,WMG,0,0,0,0,26,0,0,312,0,213,185
+80,zDigiBot-Hourly,zDigiBot-Hourly,NULL,DDB/zDigiBot,0,0,0,0,0,0,0,NULL,NULL,213,80
+74,zDigiBot-Hourly,zDigiBot-Hourly,NULL,DDB,0,0,0,0,0,0,0,NULL,NULL,213,74
