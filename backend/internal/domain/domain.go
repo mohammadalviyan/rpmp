@@ -191,11 +191,58 @@ type FreshnessStatus string
 const (
 	FreshnessFresh      FreshnessStatus = "fresh"
 	FreshnessSyncFailed FreshnessStatus = "sync_failed"
+	FreshnessNever      FreshnessStatus = "never"
 )
 
 type Freshness struct {
 	Status                  FreshnessStatus
 	LastSuccessfulRefreshAt time.Time
+}
+
+type UseCaseProcessSnapshot struct {
+	SourceProcessKey string
+	ProcessName      string
+	PackageName      string
+	EnvironmentName  *string
+	ExecutingCount   int
+	PendingCount     int
+	SuspendedCount   int
+	ResumedCount     int
+	SuccessfulCount  int
+	ErrorCount       int
+	StoppedCount     int
+}
+
+type UseCaseSnapshot struct {
+	UseCase   StoredUseCase
+	Processes []UseCaseProcessSnapshot
+}
+
+type UseCaseMetrics struct {
+	ID              string
+	Name            string
+	Status          UseCaseStatus
+	SourceKey       string
+	UpdatedAt       time.Time
+	ProcessCount    int
+	SuccessfulCount int
+	ErrorCount      int
+	StoppedCount    int
+	FailedCount     int
+	ExecutionVolume int
+	SuccessRate     *float64
+	Environments    []string
+	Processes       []UseCaseProcessSnapshot
+}
+
+type UseCaseList struct {
+	Freshness Freshness
+	Items     []UseCaseMetrics
+}
+
+type UseCaseDetail struct {
+	Freshness Freshness
+	UseCase   UseCaseMetrics
 }
 
 type Period struct {

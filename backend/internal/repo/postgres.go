@@ -226,6 +226,102 @@ func (r *Postgres) LatestSyncRun(ctx context.Context) (domain.SyncRun, error) {
 	return mapSyncRun(row)
 }
 
+func (r *Postgres) ListUseCaseSnapshots(
+	ctx context.Context,
+	query string,
+	status string,
+) ([]domain.UseCaseSnapshot, error) {
+	rows, err := r.queries.ListUseCaseSnapshotRows(ctx, dbgen.ListUseCaseSnapshotRowsParams{
+		SearchQuery: query, StatusFilter: status,
+	})
+	if err != nil {
+		return nil, err
+	}
+	snapshots := make([]domain.UseCaseSnapshot, 0)
+	indexByID := make(map[string]int)
+	for _, row := range rows {
+		useCase, err := mapUseCaseSnapshotIdentity(row.ID, row.SourceKey, row.Name, row.Status, row.UpdatedAt)
+		if err != nil {
+			return nil, err
+		}
+		index, ok := indexByID[useCase.ID]
+		if !ok {
+			index = len(snapshots)
+			indexByID[useCase.ID] = index
+			snapshots = append(snapshots, domain.UseCaseSnapshot{
+				UseCase: useCase, Processes: []domain.UseCaseProcessSnapshot{},
+			})
+		}
+		process, ok, err := mapUseCaseProcessSnapshot(
+			row.SourceProcessKey, row.ProcessName, row.PackageName, row.EnvironmentName,
+			row.ExecutingCount, row.PendingCount, row.SuspendedCount, row.ResumedCount,
+			row.SuccessfulCount, row.ErrorCount, row.StoppedCount,
+		)
+		if err != nil {
+			return nil, err
+		}
+		if ok {
+			snapshots[index].Processes = append(snapshots[index].Processes, process)
+		}
+	}
+	return snapshots, nil
+}
+
+func (r *Postgres) GetUseCaseSnapshot(ctx context.Context, id string) (domain.UseCaseSnapshot, error) {
+	parsed, err := uuid.Parse(id)
+	if err != nil {
+		return domain.UseCaseSnapshot{}, domain.NewError(domain.KindNotFound, err)
+	}
+	rows, err := r.queries.GetUseCaseSnapshotRows(ctx, pgtype.UUID{Bytes: parsed, Valid: true})
+	if err != nil {
+		return domain.UseCaseSnapshot{}, err
+	}
+	if len(rows) == 0 {
+		return domain.UseCaseSnapshot{}, domain.NewError(domain.KindNotFound, pgx.ErrNoRows)
+	}
+	first := rows[0]
+	useCase, err := mapUseCaseSnapshotIdentity(first.ID, first.SourceKey, first.Name, first.Status, first.UpdatedAt)
+	if err != nil {
+		return domain.UseCaseSnapshot{}, err
+	}
+	snapshot := domain.UseCaseSnapshot{
+		UseCase: useCase, Processes: make([]domain.UseCaseProcessSnapshot, 0, len(rows)),
+	}
+	for _, row := range rows {
+		process, ok, err := mapUseCaseProcessSnapshot(
+			row.SourceProcessKey, row.ProcessName, row.PackageName, row.EnvironmentName,
+			row.ExecutingCount, row.PendingCount, row.SuspendedCount, row.ResumedCount,
+			row.SuccessfulCount, row.ErrorCount, row.StoppedCount,
+		)
+		if err != nil {
+			return domain.UseCaseSnapshot{}, err
+		}
+		if ok {
+			snapshot.Processes = append(snapshot.Processes, process)
+		}
+	}
+	return snapshot, nil
+}
+
+func (r *Postgres) UseCaseFreshness(ctx context.Context) (domain.Freshness, error) {
+	row, err := r.queries.GetDashboardFreshness(ctx)
+	if err != nil {
+		return domain.Freshness{}, err
+	}
+	status := domain.FreshnessNever
+	if row.LastSuccessfulRefreshAt.Valid {
+		status = domain.FreshnessFresh
+	}
+	if row.LatestStatus == string(domain.SyncRunFailure) {
+		status = domain.FreshnessSyncFailed
+	}
+	freshness := domain.Freshness{Status: status}
+	if row.LastSuccessfulRefreshAt.Valid {
+		freshness.LastSuccessfulRefreshAt = row.LastSuccessfulRefreshAt.Time.UTC()
+	}
+	return freshness, nil
+}
+
 func (r *Postgres) AggregateDashboardSummary(
 	ctx context.Context,
 	period domain.Period,
@@ -351,6 +447,66 @@ func parseUUID(value, field string) (pgtype.UUID, error) {
 		return pgtype.UUID{}, fmt.Errorf("parse %s ID: %w", field, err)
 	}
 	return pgtype.UUID{Bytes: parsed, Valid: true}, nil
+}
+
+func mapUseCaseSnapshotIdentity(
+	id pgtype.UUID,
+	sourceKey string,
+	name string,
+	status string,
+	updatedAt pgtype.Timestamptz,
+) (domain.StoredUseCase, error) {
+	if !id.Valid || !updatedAt.Valid {
+		return domain.StoredUseCase{}, errors.New("use case snapshot contains invalid database values")
+	}
+	return domain.StoredUseCase{
+		ID:        uuid.UUID(id.Bytes).String(),
+		SourceKey: sourceKey,
+		Name:      name,
+		Status:    domain.UseCaseStatus(status),
+		UpdatedAt: updatedAt.Time.UTC(),
+	}, nil
+}
+
+func mapUseCaseProcessSnapshot(
+	sourceProcessKey pgtype.Text,
+	processName pgtype.Text,
+	packageName pgtype.Text,
+	environmentName pgtype.Text,
+	executingCount pgtype.Int4,
+	pendingCount pgtype.Int4,
+	suspendedCount pgtype.Int4,
+	resumedCount pgtype.Int4,
+	successfulCount pgtype.Int4,
+	errorCount pgtype.Int4,
+	stoppedCount pgtype.Int4,
+) (domain.UseCaseProcessSnapshot, bool, error) {
+	if !sourceProcessKey.Valid {
+		return domain.UseCaseProcessSnapshot{}, false, nil
+	}
+	if !processName.Valid || !packageName.Valid || !executingCount.Valid || !pendingCount.Valid ||
+		!suspendedCount.Valid || !resumedCount.Valid || !successfulCount.Valid ||
+		!errorCount.Valid || !stoppedCount.Valid {
+		return domain.UseCaseProcessSnapshot{}, false, errors.New("process snapshot contains invalid database values")
+	}
+	var environment *string
+	if environmentName.Valid {
+		value := environmentName.String
+		environment = &value
+	}
+	return domain.UseCaseProcessSnapshot{
+		SourceProcessKey: sourceProcessKey.String,
+		ProcessName:      processName.String,
+		PackageName:      packageName.String,
+		EnvironmentName:  environment,
+		ExecutingCount:   int(executingCount.Int32),
+		PendingCount:     int(pendingCount.Int32),
+		SuspendedCount:   int(suspendedCount.Int32),
+		ResumedCount:     int(resumedCount.Int32),
+		SuccessfulCount:  int(successfulCount.Int32),
+		ErrorCount:       int(errorCount.Int32),
+		StoppedCount:     int(stoppedCount.Int32),
+	}, true, nil
 }
 
 func mapStoredUseCase(row dbgen.UseCase) (domain.StoredUseCase, error) {

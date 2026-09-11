@@ -366,6 +366,99 @@ func (q *Queries) GetUseCaseBySourceKey(ctx context.Context, sourceKey string) (
 	return i, err
 }
 
+const getUseCaseSnapshotRows = `-- name: GetUseCaseSnapshotRows :many
+WITH latest_successful_snapshot AS (
+    SELECT aggregate_snapshots.id
+    FROM aggregate_snapshots
+    JOIN sync_runs ON sync_runs.id = aggregate_snapshots.sync_run_id
+    WHERE sync_runs.status = 'success'
+      AND sync_runs.finished_at IS NOT NULL
+    ORDER BY sync_runs.finished_at DESC, sync_runs.id DESC, aggregate_snapshots.id DESC
+    LIMIT 1
+)
+SELECT
+    use_cases.id,
+    use_cases.source_key,
+    use_cases.name,
+    use_cases.status,
+    use_cases.updated_at,
+    process_aggregate_rows.source_process_key,
+    process_aggregate_rows.process_name,
+    process_aggregate_rows.package_name,
+    process_aggregate_rows.environment_name,
+    process_aggregate_rows.executing_count,
+    process_aggregate_rows.pending_count,
+    process_aggregate_rows.suspended_count,
+    process_aggregate_rows.resumed_count,
+    process_aggregate_rows.successful_count,
+    process_aggregate_rows.error_count,
+    process_aggregate_rows.stopped_count
+FROM use_cases
+LEFT JOIN latest_successful_snapshot ON true
+LEFT JOIN process_aggregate_rows
+    ON process_aggregate_rows.aggregate_snapshot_id = latest_successful_snapshot.id
+   AND process_aggregate_rows.use_case_id = use_cases.id
+WHERE use_cases.id = $1
+ORDER BY process_aggregate_rows.process_name ASC,
+         process_aggregate_rows.source_process_key ASC
+`
+
+type GetUseCaseSnapshotRowsRow struct {
+	ID               pgtype.UUID
+	SourceKey        string
+	Name             string
+	Status           string
+	UpdatedAt        pgtype.Timestamptz
+	SourceProcessKey pgtype.Text
+	ProcessName      pgtype.Text
+	PackageName      pgtype.Text
+	EnvironmentName  pgtype.Text
+	ExecutingCount   pgtype.Int4
+	PendingCount     pgtype.Int4
+	SuspendedCount   pgtype.Int4
+	ResumedCount     pgtype.Int4
+	SuccessfulCount  pgtype.Int4
+	ErrorCount       pgtype.Int4
+	StoppedCount     pgtype.Int4
+}
+
+func (q *Queries) GetUseCaseSnapshotRows(ctx context.Context, useCaseID pgtype.UUID) ([]GetUseCaseSnapshotRowsRow, error) {
+	rows, err := q.db.Query(ctx, getUseCaseSnapshotRows, useCaseID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []GetUseCaseSnapshotRowsRow{}
+	for rows.Next() {
+		var i GetUseCaseSnapshotRowsRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.SourceKey,
+			&i.Name,
+			&i.Status,
+			&i.UpdatedAt,
+			&i.SourceProcessKey,
+			&i.ProcessName,
+			&i.PackageName,
+			&i.EnvironmentName,
+			&i.ExecutingCount,
+			&i.PendingCount,
+			&i.SuspendedCount,
+			&i.ResumedCount,
+			&i.SuccessfulCount,
+			&i.ErrorCount,
+			&i.StoppedCount,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const insertAggregateSnapshot = `-- name: InsertAggregateSnapshot :one
 INSERT INTO aggregate_snapshots (
     id,
@@ -445,6 +538,108 @@ type InsertProcessAggregateRowsParams struct {
 	SourceTotalRows        int32
 	SourceEntityKey        string
 	ImportedAt             pgtype.Timestamptz
+}
+
+const listUseCaseSnapshotRows = `-- name: ListUseCaseSnapshotRows :many
+WITH latest_successful_snapshot AS (
+    SELECT aggregate_snapshots.id
+    FROM aggregate_snapshots
+    JOIN sync_runs ON sync_runs.id = aggregate_snapshots.sync_run_id
+    WHERE sync_runs.status = 'success'
+      AND sync_runs.finished_at IS NOT NULL
+    ORDER BY sync_runs.finished_at DESC, sync_runs.id DESC, aggregate_snapshots.id DESC
+    LIMIT 1
+)
+SELECT
+    use_cases.id,
+    use_cases.source_key,
+    use_cases.name,
+    use_cases.status,
+    use_cases.updated_at,
+    process_aggregate_rows.source_process_key,
+    process_aggregate_rows.process_name,
+    process_aggregate_rows.package_name,
+    process_aggregate_rows.environment_name,
+    process_aggregate_rows.executing_count,
+    process_aggregate_rows.pending_count,
+    process_aggregate_rows.suspended_count,
+    process_aggregate_rows.resumed_count,
+    process_aggregate_rows.successful_count,
+    process_aggregate_rows.error_count,
+    process_aggregate_rows.stopped_count
+FROM use_cases
+LEFT JOIN latest_successful_snapshot ON true
+LEFT JOIN process_aggregate_rows
+    ON process_aggregate_rows.aggregate_snapshot_id = latest_successful_snapshot.id
+   AND process_aggregate_rows.use_case_id = use_cases.id
+WHERE ($1::text = ''
+       OR strpos(lower(use_cases.name), lower($1::text)) > 0)
+  AND ($2::text = ''
+       OR use_cases.status = $2::text)
+ORDER BY use_cases.name ASC, use_cases.id ASC,
+         process_aggregate_rows.process_name ASC,
+         process_aggregate_rows.source_process_key ASC
+`
+
+type ListUseCaseSnapshotRowsParams struct {
+	SearchQuery  string
+	StatusFilter string
+}
+
+type ListUseCaseSnapshotRowsRow struct {
+	ID               pgtype.UUID
+	SourceKey        string
+	Name             string
+	Status           string
+	UpdatedAt        pgtype.Timestamptz
+	SourceProcessKey pgtype.Text
+	ProcessName      pgtype.Text
+	PackageName      pgtype.Text
+	EnvironmentName  pgtype.Text
+	ExecutingCount   pgtype.Int4
+	PendingCount     pgtype.Int4
+	SuspendedCount   pgtype.Int4
+	ResumedCount     pgtype.Int4
+	SuccessfulCount  pgtype.Int4
+	ErrorCount       pgtype.Int4
+	StoppedCount     pgtype.Int4
+}
+
+func (q *Queries) ListUseCaseSnapshotRows(ctx context.Context, arg ListUseCaseSnapshotRowsParams) ([]ListUseCaseSnapshotRowsRow, error) {
+	rows, err := q.db.Query(ctx, listUseCaseSnapshotRows, arg.SearchQuery, arg.StatusFilter)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []ListUseCaseSnapshotRowsRow{}
+	for rows.Next() {
+		var i ListUseCaseSnapshotRowsRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.SourceKey,
+			&i.Name,
+			&i.Status,
+			&i.UpdatedAt,
+			&i.SourceProcessKey,
+			&i.ProcessName,
+			&i.PackageName,
+			&i.EnvironmentName,
+			&i.ExecutingCount,
+			&i.PendingCount,
+			&i.SuspendedCount,
+			&i.ResumedCount,
+			&i.SuccessfulCount,
+			&i.ErrorCount,
+			&i.StoppedCount,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
 }
 
 const startSyncRun = `-- name: StartSyncRun :one

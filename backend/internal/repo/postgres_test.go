@@ -335,6 +335,76 @@ func TestPostgresRepositoryAndMigration(t *testing.T) {
 		t.Fatal(err)
 	}
 
+	var aggregateUseCaseID string
+	if err := pool.QueryRow(ctx, `
+		SELECT id
+		FROM use_cases
+		WHERE source_key = $1
+	`, "Area/Name").Scan(&aggregateUseCaseID); err != nil {
+		t.Fatal(err)
+	}
+	newerRunID := uuid.NewString()
+	newerSnapshotID := uuid.NewString()
+	newerFinishedAt := now.Add(5 * time.Minute)
+	if _, err := pool.Exec(ctx, `
+		INSERT INTO sync_runs (
+		    id, started_at, finished_at, status, rows_read, rows_written, error_code
+		) VALUES ($1, $2, $3, 'success', 1, 1, NULL);
+		INSERT INTO aggregate_snapshots (
+		    id, sync_run_id, source_snapshot_key, imported_at, source_row_count
+		) VALUES ($4, $1, $5, $3, 1);
+		INSERT INTO process_aggregate_rows (
+		    id, aggregate_snapshot_id, sync_run_id, use_case_id,
+		    source_process_key, process_name, package_name, environment_name,
+		    executing_count, pending_count, suspended_count, resumed_count,
+		    successful_count, error_count, stopped_count,
+		    average_duration_seconds, average_pending_seconds,
+		    source_total_rows, source_entity_key, imported_at
+		) VALUES (
+		    $6, $4, $1, $7, '99', 'Latest Process', 'latest.pkg', 'PROD',
+		    1, 2, 3, 4, 8, 1, 1, NULL, NULL, 1, '199', $3
+		)
+	`, newerRunID, now.Add(150*time.Second), newerFinishedAt,
+		newerSnapshotID, "csv-sha256:newer", uuid.NewString(), aggregateUseCaseID); err != nil {
+		t.Fatal(err)
+	}
+
+	useCaseRows, err := repository.ListUseCaseSnapshots(ctx, "", "")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(useCaseRows) != 2 || useCaseRows[0].UseCase.Name != "Area/Name" ||
+		len(useCaseRows[0].Processes) != 1 || useCaseRows[0].Processes[0].SuccessfulCount != 8 ||
+		useCaseRows[1].UseCase.ID != useCaseID || len(useCaseRows[1].Processes) != 0 {
+		t.Fatalf("latest snapshot list = %#v", useCaseRows)
+	}
+	filteredRows, err := repository.ListUseCaseSnapshots(ctx, "aReA/nAm", "active")
+	if err != nil || len(filteredRows) != 1 || filteredRows[0].UseCase.ID != aggregateUseCaseID {
+		t.Fatalf("filtered list = %#v err=%v", filteredRows, err)
+	}
+	inactiveRows, err := repository.ListUseCaseSnapshots(ctx, "", "inactive")
+	if err != nil || len(inactiveRows) != 1 || inactiveRows[0].UseCase.ID != useCaseID ||
+		len(inactiveRows[0].Processes) != 0 {
+		t.Fatalf("zero-row inactive list = %#v err=%v", inactiveRows, err)
+	}
+	useCaseDetail, err := repository.GetUseCaseSnapshot(ctx, aggregateUseCaseID)
+	if err != nil || len(useCaseDetail.Processes) != 1 ||
+		useCaseDetail.Processes[0].SourceProcessKey != "99" ||
+		useCaseDetail.Processes[0].ExecutingCount != 1 {
+		t.Fatalf("use case detail = %#v err=%v", useCaseDetail, err)
+	}
+	if _, err := repository.GetUseCaseSnapshot(ctx, "not-a-uuid"); domain.ErrorKindOf(err) != domain.KindNotFound {
+		t.Fatalf("malformed use case ID error = %v", err)
+	}
+	if _, err := repository.GetUseCaseSnapshot(ctx, uuid.NewString()); domain.ErrorKindOf(err) != domain.KindNotFound {
+		t.Fatalf("unknown use case ID error = %v", err)
+	}
+	useCaseFreshness, err := repository.UseCaseFreshness(ctx)
+	if err != nil || useCaseFreshness.Status != domain.FreshnessSyncFailed ||
+		!useCaseFreshness.LastSuccessfulRefreshAt.Equal(newerFinishedAt) {
+		t.Fatalf("use case freshness = %#v err=%v", useCaseFreshness, err)
+	}
+
 	var aggregateRows, groupedUseCases, failures int
 	if err := pool.QueryRow(ctx, `
 		SELECT
