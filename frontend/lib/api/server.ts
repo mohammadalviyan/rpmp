@@ -8,6 +8,8 @@ import type {
   DashboardSummary,
   ExecutionTrend,
   User,
+  UseCaseResponse,
+  UseCasesResponse,
 } from "@/lib/api/types";
 
 const apiOrigin = (
@@ -34,6 +36,19 @@ export type DashboardOverviewResult =
       errors: DashboardResourceResult<DashboardErrors>;
     }
   | { status: "unauthenticated" };
+
+export type UseCasesResult =
+  | { status: "success"; data: UseCasesResponse }
+  | { status: "unauthenticated" }
+  | { status: "source_unavailable" }
+  | { status: "unexpected_error" };
+
+export type UseCaseResult =
+  | { status: "success"; data: UseCaseResponse }
+  | { status: "unauthenticated" }
+  | { status: "not_found" }
+  | { status: "source_unavailable" }
+  | { status: "unexpected_error" };
 
 async function fetchFromApi(path: string): Promise<Response> {
   const cookieHeader = (await cookies()).toString();
@@ -114,4 +129,39 @@ export async function getDashboardOverview(): Promise<DashboardOverviewResult> {
   }
 
   return { status: "success", summary, trend, errors };
+}
+
+export async function getUseCases(): Promise<UseCasesResult> {
+  return getDashboardResource<UseCasesResponse>("/api/v1/use-cases");
+}
+
+export async function getUseCase(id: string): Promise<UseCaseResult> {
+  try {
+    const response = await fetchFromApi(
+      `/api/v1/use-cases/${encodeURIComponent(id)}`,
+    );
+
+    if (response.status === 401) {
+      return { status: "unauthenticated" };
+    }
+
+    if (response.status === 404) {
+      return { status: "not_found" };
+    }
+
+    if (response.status === 503) {
+      return { status: "source_unavailable" };
+    }
+
+    if (!response.ok) {
+      return { status: "unexpected_error" };
+    }
+
+    return {
+      status: "success",
+      data: (await response.json()) as UseCaseResponse,
+    };
+  } catch {
+    return { status: "unexpected_error" };
+  }
 }

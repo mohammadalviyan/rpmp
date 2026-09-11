@@ -75,3 +75,55 @@ export type DashboardErrors = {
     count: number;
   }>;
 };
+
+export type DataFreshness = {
+  status: string;
+  last_successful_refresh_at: string;
+};
+
+export type ApiUseCaseStatus = "active" | "inactive";
+
+export type UseCaseListItem = {
+  id: string;
+  name: string;
+  status: ApiUseCaseStatus;
+  process_count: number;
+  successful_count: number;
+  error_count: number;
+  stopped_count: number;
+  failed_count: number;
+  execution_volume: number;
+  success_rate: number | null;
+  environments: string[];
+};
+
+export type UseCasesResponse = {
+  freshness: DataFreshness;
+  items: UseCaseListItem[];
+};
+
+export type UseCaseProcess = {
+  source_process_key: string;
+  process_name: string;
+  package_name: string;
+  environment_name: string;
+  successful_count: number;
+  error_count: number;
+  stopped_count: number;
+  failed_count: number;
+  executing_count: number;
+  pending_count: number;
+  suspended_count: number;
+  resumed_count: number;
+};
+
+export type UseCaseDetail = UseCaseListItem & {
+  source_key: string;
+  updated_at: string;
+  processes: UseCaseProcess[];
+};
+
+export type UseCaseResponse = {
+  freshness: DataFreshness;
+  use_case: UseCaseDetail;
+};

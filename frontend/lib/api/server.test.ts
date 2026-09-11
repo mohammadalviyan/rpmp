@@ -6,8 +6,13 @@ vi.mock("next/headers", () => ({
   }),
 }));
 
-const { getCurrentUser, getDashboardOverview, getDashboardSummary } =
-  await import("@/lib/api/server");
+const {
+  getCurrentUser,
+  getDashboardOverview,
+  getDashboardSummary,
+  getUseCase,
+  getUseCases,
+} = await import("@/lib/api/server");
 
 const fetchMock = vi.fn();
 const dashboardSummary = {
@@ -216,6 +221,82 @@ describe("getDashboardOverview", () => {
       summary: { status: "success", data: dashboardSummary },
       trend: { status: "source_unavailable" },
       errors: { status: "unexpected_error" },
+    });
+  });
+});
+
+describe("use case API reads", () => {
+  beforeEach(() => {
+    fetchMock.mockReset();
+    vi.stubGlobal("fetch", fetchMock);
+  });
+
+  it("loads the use case list with no-store cookie forwarding", async () => {
+    const response = {
+      freshness: {
+        status: "fresh",
+        last_successful_refresh_at: "2026-09-11T02:00:00Z",
+      },
+      items: [],
+    };
+    fetchMock.mockResolvedValue(
+      new Response(JSON.stringify(response), { status: 200 }),
+    );
+
+    await expect(getUseCases()).resolves.toEqual({
+      status: "success",
+      data: response,
+    });
+    expect(fetchMock).toHaveBeenCalledWith(
+      "http://127.0.0.1:8080/api/v1/use-cases",
+      {
+        cache: "no-store",
+        headers: { cookie: "rpmp_access=http-only-cookie" },
+      },
+    );
+  });
+
+  it("loads an encoded use case ID and maps 404", async () => {
+    fetchMock.mockResolvedValueOnce(
+      new Response(
+        JSON.stringify({
+          freshness: {
+            status: "fresh",
+            last_successful_refresh_at: "2026-09-11T02:00:00Z",
+          },
+          use_case: { id: "finance/invoice" },
+        }),
+        { status: 200 },
+      ),
+    );
+
+    await expect(getUseCase("finance/invoice")).resolves.toMatchObject({
+      status: "success",
+      data: { use_case: { id: "finance/invoice" } },
+    });
+    expect(fetchMock).toHaveBeenLastCalledWith(
+      "http://127.0.0.1:8080/api/v1/use-cases/finance%2Finvoice",
+      expect.objectContaining({
+        headers: { cookie: "rpmp_access=http-only-cookie" },
+      }),
+    );
+
+    fetchMock.mockResolvedValueOnce(new Response(null, { status: 404 }));
+
+    await expect(getUseCase("unknown")).resolves.toEqual({
+      status: "not_found",
+    });
+  });
+
+  it("maps use case authentication and source failures", async () => {
+    fetchMock.mockResolvedValueOnce(new Response(null, { status: 401 }));
+    await expect(getUseCases()).resolves.toEqual({
+      status: "unauthenticated",
+    });
+
+    fetchMock.mockResolvedValueOnce(new Response(null, { status: 503 }));
+    await expect(getUseCase("use-case-a")).resolves.toEqual({
+      status: "source_unavailable",
     });
   });
 });
