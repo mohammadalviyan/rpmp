@@ -82,7 +82,8 @@ npm run dev
 ## Workflow
 
 - One backlog ID per session. Frontend cards live in [`docs/backlog/FE/`](docs/backlog/FE/). Backend cards live in [`docs/backlog/BE/`](docs/backlog/BE/).
-- Local DB sync (not Swagger): [`docs/plans/LOCAL_DB_SYNC_2026-09-09.md`](docs/plans/LOCAL_DB_SYNC_2026-09-09.md). Next backend card is **BE-05**.
+- Local DB sync (not Swagger): [`docs/plans/LOCAL_DB_SYNC_2026-09-09.md`](docs/plans/LOCAL_DB_SYNC_2026-09-09.md).
+- Use Cases from local API (not mock): [`docs/plans/USE_CASES_API_2026-09-11.md`](docs/plans/USE_CASES_API_2026-09-11.md). Next backend card is **BE-09**. Frontend **FE-14** after BE-09.
 - On an FE card, do not edit `backend/`.
 - Execute the card's Execution prompt (agent) or treat in scope / out of scope / frozen JSON / acceptance as the spec (by hand).
 - Mark that card complete and open a PR.

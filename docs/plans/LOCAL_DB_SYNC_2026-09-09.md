@@ -34,6 +34,8 @@ Live read-only source Postgres remains the target adapter. Its acceptance check 
 
 FE-12 can start after BE-07 if freshness on summary is enough; FE-13 needs BE-08.
 
+Use Cases live API is a later slice: `docs/plans/USE_CASES_API_2026-09-11.md` (BE-09, FE-14).
+
 ## Non-goals
 
 - Query Orchestrator from `GET /dashboard/*`
