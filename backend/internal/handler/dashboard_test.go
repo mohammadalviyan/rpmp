@@ -40,6 +40,7 @@ func TestDashboardSummaryContractForViewerAndAdmin(t *testing.T) {
 		NewDashboard(summary, nil, nil),
 		tokens,
 		"https://rpmp.example",
+		nil,
 	)
 
 	for _, role := range []domain.Role{domain.RoleViewer, domain.RoleAdmin} {
@@ -81,6 +82,7 @@ func TestDashboardSummaryRejectsUnauthenticatedAndInvalidPeriod(t *testing.T) {
 		NewDashboard(dashboardStub{}, nil, nil),
 		verifierStub{},
 		"https://rpmp.example",
+		nil,
 	)
 
 	request := httptest.NewRequest(http.MethodGet, "/api/v1/dashboard/summary", nil)
@@ -95,6 +97,7 @@ func TestDashboardSummaryRejectsUnauthenticatedAndInvalidPeriod(t *testing.T) {
 		NewDashboard(dashboardStub{err: domain.NewError(domain.KindInvalidPeriod, nil)}, nil, nil),
 		verifierStub{principal: domain.Principal{UserID: "user-1", Role: domain.RoleViewer}},
 		"https://rpmp.example",
+		nil,
 	)
 	request = httptest.NewRequest(http.MethodGet, "/api/v1/dashboard/summary?from=2026-09-06T00:00:00Z", nil)
 	request.AddCookie(&http.Cookie{Name: "rpmp_access", Value: "valid"})
@@ -112,6 +115,7 @@ func TestDashboardSummaryHidesSourceFailureDetails(t *testing.T) {
 		NewDashboard(dashboardStub{err: domain.NewError(domain.KindSourceUnavailable, errors.New("JobState timeout"))}, nil, nil),
 		verifierStub{principal: domain.Principal{UserID: "user-1", Role: domain.RoleViewer}},
 		"https://rpmp.example",
+		nil,
 	)
 	request := httptest.NewRequest(http.MethodGet, "/api/v1/dashboard/summary", nil)
 	request.AddCookie(&http.Cookie{Name: "rpmp_access", Value: "valid"})
@@ -143,6 +147,7 @@ func TestDashboardZeroVolumeEncodesNullSuccessRate(t *testing.T) {
 		}}, nil, nil),
 		verifierStub{principal: domain.Principal{UserID: "user-1", Role: domain.RoleViewer}},
 		"https://rpmp.example",
+		nil,
 	)
 	request := httptest.NewRequest(http.MethodGet, "/api/v1/dashboard/summary?from=2026-01-01T00:00:00Z&to=2026-01-02T00:00:00Z", nil)
 	request.AddCookie(&http.Cookie{Name: "rpmp_access", Value: "valid"})
@@ -171,6 +176,7 @@ func TestDashboardChartContractsForViewerAndAdmin(t *testing.T) {
 		),
 		tokens,
 		"https://rpmp.example",
+		nil,
 	)
 
 	tests := []struct {
@@ -235,6 +241,7 @@ func TestDashboardChartRoutesRequireCookieAndValidatePeriod(t *testing.T) {
 		dashboard,
 		verifierStub{principal: domain.Principal{UserID: "user-1", Role: domain.RoleViewer}},
 		"https://rpmp.example",
+		nil,
 	)
 	for _, path := range []string{
 		"/api/v1/dashboard/execution-trend",
@@ -268,6 +275,7 @@ func TestDashboardChartRoutesHideSourceFailureDetails(t *testing.T) {
 		),
 		verifierStub{principal: domain.Principal{UserID: "user-1", Role: domain.RoleViewer}},
 		"https://rpmp.example",
+		nil,
 	)
 	for _, path := range []string{
 		"/api/v1/dashboard/execution-trend",

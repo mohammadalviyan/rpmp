@@ -21,6 +21,7 @@ type Querier interface {
 	GetDashboardSummaryAggregate(ctx context.Context, arg GetDashboardSummaryAggregateParams) (GetDashboardSummaryAggregateRow, error)
 	GetExecutionByID(ctx context.Context, id pgtype.UUID) (Execution, error)
 	GetExecutionErrorByID(ctx context.Context, id pgtype.UUID) (ExecutionError, error)
+	GetLatestSyncRun(ctx context.Context) (SyncRun, error)
 	GetSyncRunByID(ctx context.Context, id pgtype.UUID) (SyncRun, error)
 	GetUseCaseBySourceKey(ctx context.Context, sourceKey string) (UseCase, error)
 	GetUserByEmployeeID(ctx context.Context, employeeID string) (User, error)

@@ -304,6 +304,28 @@ func (q *Queries) GetExecutionErrorByID(ctx context.Context, id pgtype.UUID) (Ex
 	return i, err
 }
 
+const getLatestSyncRun = `-- name: GetLatestSyncRun :one
+SELECT id, started_at, finished_at, status, rows_read, rows_written, error_code
+FROM sync_runs
+ORDER BY started_at DESC, id DESC
+LIMIT 1
+`
+
+func (q *Queries) GetLatestSyncRun(ctx context.Context) (SyncRun, error) {
+	row := q.db.QueryRow(ctx, getLatestSyncRun)
+	var i SyncRun
+	err := row.Scan(
+		&i.ID,
+		&i.StartedAt,
+		&i.FinishedAt,
+		&i.Status,
+		&i.RowsRead,
+		&i.RowsWritten,
+		&i.ErrorCode,
+	)
+	return i, err
+}
+
 const getSyncRunByID = `-- name: GetSyncRunByID :one
 SELECT id, started_at, finished_at, status, rows_read, rows_written, error_code
 FROM sync_runs

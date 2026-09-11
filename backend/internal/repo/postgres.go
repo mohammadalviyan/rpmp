@@ -218,6 +218,14 @@ func (r *Postgres) FindSyncRunByID(ctx context.Context, id string) (domain.SyncR
 	return mapSyncRun(row)
 }
 
+func (r *Postgres) LatestSyncRun(ctx context.Context) (domain.SyncRun, error) {
+	row, err := r.queries.GetLatestSyncRun(ctx)
+	if err != nil {
+		return domain.SyncRun{}, mapQueryError(err)
+	}
+	return mapSyncRun(row)
+}
+
 func (r *Postgres) AggregateDashboardSummary(
 	ctx context.Context,
 	period domain.Period,

@@ -197,6 +197,9 @@ func TestPostgresRepositoryAndMigration(t *testing.T) {
 	if _, err := repository.AggregateDashboardSummary(ctx, dashboardPeriod); domain.ErrorKindOf(err) != domain.KindSourceUnavailable {
 		t.Fatalf("rows without a successful sync must be unavailable: %v", err)
 	}
+	if _, err := repository.LatestSyncRun(ctx); domain.ErrorKindOf(err) != domain.KindNotFound {
+		t.Fatalf("latest sync without runs = %v", err)
+	}
 
 	syncRunID := uuid.NewString()
 	started, err := repository.StartSyncRun(ctx, domain.SyncRunStart{ID: syncRunID, StartedAt: now})
@@ -216,6 +219,10 @@ func TestPostgresRepositoryAndMigration(t *testing.T) {
 	foundSyncRun, err := repository.FindSyncRunByID(ctx, syncRunID)
 	if err != nil || foundSyncRun.Status != domain.SyncRunSuccess {
 		t.Fatalf("find sync run: run=%#v err=%v", foundSyncRun, err)
+	}
+	latestSyncRun, err := repository.LatestSyncRun(ctx)
+	if err != nil || latestSyncRun.ID != syncRunID || latestSyncRun.Status != domain.SyncRunSuccess {
+		t.Fatalf("latest sync run: run=%#v err=%v", latestSyncRun, err)
 	}
 
 	dashboardSummary, err := repository.AggregateDashboardSummary(ctx, dashboardPeriod)

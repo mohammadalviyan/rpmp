@@ -3,6 +3,7 @@ package usecase
 import (
 	"context"
 	"errors"
+	"sync"
 	"testing"
 	"time"
 
@@ -36,6 +37,7 @@ type fakeSyncSession struct {
 	publish    domain.SnapshotPublishResult
 	publishErr error
 	finishErr  error
+	onRelease  func()
 }
 
 func (s *fakeSyncSession) StartSyncRun(_ context.Context, start domain.SyncRunStart) (domain.SyncRun, error) {
@@ -65,6 +67,9 @@ func (s *fakeSyncSession) FinishSyncRun(_ context.Context, finish domain.SyncRun
 
 func (s *fakeSyncSession) Release(context.Context) error {
 	s.released = true
+	if s.onRelease != nil {
+		s.onRelease()
+	}
 	return nil
 }
 
@@ -193,6 +198,81 @@ func TestSyncRunnerRejectsOverlap(t *testing.T) {
 	_, err := runner.Run(context.Background())
 	if domain.ErrorKindOf(err) != domain.KindSyncInProgress {
 		t.Fatalf("error kind = %q, want %q", domain.ErrorKindOf(err), domain.KindSyncInProgress)
+	}
+}
+
+type blockingAggregateSource struct {
+	started chan struct{}
+	release chan struct{}
+}
+
+func (s blockingAggregateSource) Read(ctx context.Context) (domain.AggregateSnapshot, error) {
+	close(s.started)
+	select {
+	case <-s.release:
+		return domain.AggregateSnapshot{Rows: []domain.ProcessAggregate{{}}}, nil
+	case <-ctx.Done():
+		return domain.AggregateSnapshot{}, ctx.Err()
+	}
+}
+
+type lockingSyncSessions struct {
+	mu       sync.Mutex
+	held     bool
+	session  *fakeSyncSession
+	released chan struct{}
+}
+
+func (s *lockingSyncSessions) TryAcquireSyncSession(context.Context) (domain.SyncSession, bool, error) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	if s.held {
+		return nil, false, nil
+	}
+	s.held = true
+	s.session.onRelease = func() {
+		s.mu.Lock()
+		s.held = false
+		s.mu.Unlock()
+		if s.released != nil {
+			close(s.released)
+		}
+	}
+	return s.session, true, nil
+}
+
+func TestSyncRunnerStartReturnsBeforeBackgroundReadAndKeepsLock(t *testing.T) {
+	source := blockingAggregateSource{
+		started: make(chan struct{}),
+		release: make(chan struct{}),
+	}
+	released := make(chan struct{})
+	session := &fakeSyncSession{publish: domain.SnapshotPublishResult{RowsWritten: 1}}
+	sessions := &lockingSyncSessions{session: session, released: released}
+	runner := NewSyncRunner(source, sessions)
+	runner.newID = func() string { return "f33ad9a6-fc61-4ce9-b528-588a40a72f31" }
+
+	run, err := runner.Start(context.Background(), context.Background())
+	if err != nil || run.ID != "f33ad9a6-fc61-4ce9-b528-588a40a72f31" ||
+		run.Status != domain.SyncRunRunning {
+		t.Fatalf("start run=%#v err=%v", run, err)
+	}
+	select {
+	case <-source.started:
+	case <-time.After(time.Second):
+		t.Fatal("background source read did not start")
+	}
+	if _, err := runner.Start(
+		context.Background(),
+		context.Background(),
+	); domain.ErrorKindOf(err) != domain.KindSyncInProgress {
+		t.Fatalf("overlap error = %v", err)
+	}
+	close(source.release)
+	select {
+	case <-released:
+	case <-time.After(time.Second):
+		t.Fatal("background sync did not release its lock")
 	}
 }
 
