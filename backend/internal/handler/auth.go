@@ -158,6 +158,8 @@ func writeError(w http.ResponseWriter, err error) {
 		status, message = http.StatusServiceUnavailable, "Operational data is temporarily unavailable."
 	case domain.KindSyncInProgress:
 		status, message = http.StatusConflict, "A synchronization is already in progress."
+	case domain.KindNotFound:
+		status, message = http.StatusNotFound, "The requested resource was not found."
 	default:
 		kind = domain.KindInternal
 	}

@@ -181,6 +181,8 @@ func run(ctx context.Context) error {
 	dashboardSummary := usecase.NewDashboardSummaryFromRepository(postgres)
 	dashboardExecutionTrend := usecase.NewDashboardExecutionTrendFromRepository(postgres)
 	dashboardErrors := usecase.NewDashboardErrorsFromRepository(postgres)
+	listUseCases := usecase.NewListUseCases(postgres)
+	getUseCase := usecase.NewGetUseCase(postgres)
 	syncRunner := usecase.NewSyncRunner(csvsource.New(cfg.sourceCSVPath), repo.NewSyncPostgres(pool))
 	syncStatus := usecase.NewGetSyncStatus(postgres)
 	startSync := usecase.NewStartSync(syncRunner, ctx)
@@ -188,11 +190,12 @@ func run(ctx context.Context) error {
 		TTL: cfg.accessTTL, Secure: !cfg.localHTTP,
 	})
 	dashboardHandler := handler.NewDashboard(dashboardSummary, dashboardExecutionTrend, dashboardErrors)
+	useCasesHandler := handler.NewUseCases(listUseCases, getUseCase)
 	syncHandler := handler.NewSync(syncStatus, startSync)
 
 	server := &http.Server{
 		Addr:              cfg.addr,
-		Handler:           handler.NewRouter(authHandler, dashboardHandler, tokens, cfg.allowedOrigin, syncHandler),
+		Handler:           handler.NewRouter(authHandler, dashboardHandler, tokens, cfg.allowedOrigin, syncHandler, useCasesHandler),
 		ReadHeaderTimeout: 5 * time.Second,
 		ReadTimeout:       10 * time.Second,
 		WriteTimeout:      10 * time.Second,

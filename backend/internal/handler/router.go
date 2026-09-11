@@ -12,6 +12,7 @@ func NewRouter(
 	verifier middleware.TokenVerifier,
 	allowedOrigin string,
 	syncHandler *Sync,
+	useCases ...*UseCases,
 ) http.Handler {
 	mux := http.NewServeMux()
 	auth.Mount(mux, verifier, allowedOrigin)
@@ -20,6 +21,9 @@ func NewRouter(
 	}
 	if syncHandler != nil {
 		syncHandler.Mount(mux, verifier, allowedOrigin)
+	}
+	if len(useCases) > 0 && useCases[0] != nil {
+		useCases[0].Mount(mux, verifier)
 	}
 	return middleware.RequestID(middleware.RequestLog(nil, mux))
 }

@@ -202,3 +202,79 @@ WHERE source_snapshot_key = $1;
 SELECT count(id)
 FROM process_aggregate_rows
 WHERE aggregate_snapshot_id = $1;
+
+-- name: ListUseCaseSnapshotRows :many
+WITH latest_successful_snapshot AS (
+    SELECT aggregate_snapshots.id
+    FROM aggregate_snapshots
+    JOIN sync_runs ON sync_runs.id = aggregate_snapshots.sync_run_id
+    WHERE sync_runs.status = 'success'
+      AND sync_runs.finished_at IS NOT NULL
+    ORDER BY sync_runs.finished_at DESC, sync_runs.id DESC, aggregate_snapshots.id DESC
+    LIMIT 1
+)
+SELECT
+    use_cases.id,
+    use_cases.source_key,
+    use_cases.name,
+    use_cases.status,
+    use_cases.updated_at,
+    process_aggregate_rows.source_process_key,
+    process_aggregate_rows.process_name,
+    process_aggregate_rows.package_name,
+    process_aggregate_rows.environment_name,
+    process_aggregate_rows.executing_count,
+    process_aggregate_rows.pending_count,
+    process_aggregate_rows.suspended_count,
+    process_aggregate_rows.resumed_count,
+    process_aggregate_rows.successful_count,
+    process_aggregate_rows.error_count,
+    process_aggregate_rows.stopped_count
+FROM use_cases
+LEFT JOIN latest_successful_snapshot ON true
+LEFT JOIN process_aggregate_rows
+    ON process_aggregate_rows.aggregate_snapshot_id = latest_successful_snapshot.id
+   AND process_aggregate_rows.use_case_id = use_cases.id
+WHERE (sqlc.arg(search_query)::text = ''
+       OR strpos(lower(use_cases.name), lower(sqlc.arg(search_query)::text)) > 0)
+  AND (sqlc.arg(status_filter)::text = ''
+       OR use_cases.status = sqlc.arg(status_filter)::text)
+ORDER BY use_cases.name ASC, use_cases.id ASC,
+         process_aggregate_rows.process_name ASC,
+         process_aggregate_rows.source_process_key ASC;
+
+-- name: GetUseCaseSnapshotRows :many
+WITH latest_successful_snapshot AS (
+    SELECT aggregate_snapshots.id
+    FROM aggregate_snapshots
+    JOIN sync_runs ON sync_runs.id = aggregate_snapshots.sync_run_id
+    WHERE sync_runs.status = 'success'
+      AND sync_runs.finished_at IS NOT NULL
+    ORDER BY sync_runs.finished_at DESC, sync_runs.id DESC, aggregate_snapshots.id DESC
+    LIMIT 1
+)
+SELECT
+    use_cases.id,
+    use_cases.source_key,
+    use_cases.name,
+    use_cases.status,
+    use_cases.updated_at,
+    process_aggregate_rows.source_process_key,
+    process_aggregate_rows.process_name,
+    process_aggregate_rows.package_name,
+    process_aggregate_rows.environment_name,
+    process_aggregate_rows.executing_count,
+    process_aggregate_rows.pending_count,
+    process_aggregate_rows.suspended_count,
+    process_aggregate_rows.resumed_count,
+    process_aggregate_rows.successful_count,
+    process_aggregate_rows.error_count,
+    process_aggregate_rows.stopped_count
+FROM use_cases
+LEFT JOIN latest_successful_snapshot ON true
+LEFT JOIN process_aggregate_rows
+    ON process_aggregate_rows.aggregate_snapshot_id = latest_successful_snapshot.id
+   AND process_aggregate_rows.use_case_id = use_cases.id
+WHERE use_cases.id = sqlc.arg(use_case_id)
+ORDER BY process_aggregate_rows.process_name ASC,
+         process_aggregate_rows.source_process_key ASC;
