@@ -1,7 +1,30 @@
+import { redirect } from "next/navigation";
+
+import { ApiOverviewDashboard } from "@/components/api-overview-dashboard";
 import { OverviewDashboard } from "@/components/overview-dashboard";
-import { getRpaDataProvider } from "@/lib/data/provider";
+import { getDashboardOverview } from "@/lib/api/server";
+import {
+  getRpaDataMode,
+  getRpaDataProvider,
+} from "@/lib/data/provider";
 
 export default async function DashboardPage() {
+  if (getRpaDataMode() === "api") {
+    const overview = await getDashboardOverview();
+
+    if (overview.status === "unauthenticated") {
+      redirect("/login");
+    }
+
+    return (
+      <ApiOverviewDashboard
+        errors={overview.errors}
+        summary={overview.summary}
+        trend={overview.trend}
+      />
+    );
+  }
+
   const provider = getRpaDataProvider();
   const [
     summary,

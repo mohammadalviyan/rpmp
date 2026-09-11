@@ -41,15 +41,18 @@ describe("DashboardSummary", () => {
     }
   });
 
-  it("shows the period, refresh time, timezone, and freshness as text", () => {
+  it("identifies the stored copy, refresh time, timezone, and freshness", () => {
     render(<DashboardSummary summary={summary} />);
 
     expect(screen.getByText(/Period: Aug 7, 2026/)).toHaveTextContent(
       "Sep 6, 2026",
     );
     expect(screen.getByText(/Period:/)).toHaveTextContent("(UTC)");
-    expect(screen.getByText(/Last refreshed: Sep 6, 2026/)).toHaveTextContent(
-      "Freshness: fresh.",
+    expect(screen.getByText(/This is a stored RPMP copy/)).toHaveTextContent(
+      "Last successful refresh: Sep 6, 2026",
+    );
+    expect(screen.getByText(/This is a stored RPMP copy/)).toHaveTextContent(
+      "Status: fresh.",
     );
   });
 

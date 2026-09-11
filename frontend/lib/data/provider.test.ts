@@ -1,6 +1,5 @@
 import { describe, expect, it } from "vitest";
 
-import { apiDataProvider } from "@/lib/data/api-provider";
 import { mockDataProvider } from "@/lib/data/mock-provider";
 import {
   getRpaDataMode,
@@ -11,12 +10,12 @@ describe("RPMP data providers", () => {
   it("defaults unknown and missing modes to mock", () => {
     expect(getRpaDataMode(undefined)).toBe("mock");
     expect(getRpaDataMode("preview")).toBe("mock");
-    expect(getRpaDataProvider("mock")).toBe(mockDataProvider);
+    expect(getRpaDataProvider()).toBe(mockDataProvider);
   });
 
-  it("selects the typed API stub only in api mode", () => {
+  it("keeps non-Overview routes on mock data in api mode", () => {
     expect(getRpaDataMode("api")).toBe("api");
-    expect(getRpaDataProvider("api")).toBe(apiDataProvider);
+    expect(getRpaDataProvider()).toBe(mockDataProvider);
   });
 
   it("exposes the complete sample provider shape", async () => {

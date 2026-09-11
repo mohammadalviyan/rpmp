@@ -54,9 +54,9 @@ export function DashboardSummary({
           {formatUtcDateTime(summary.period.to)} ({summary.period.timezone})
         </p>
         <p>
-          Last refreshed:{" "}
+          This is a stored RPMP copy. Last successful refresh:{" "}
           {formatUtcDateTime(summary.freshness.last_successful_refresh_at)} UTC.
-          Freshness: {summary.freshness.status}.
+          Status: {summary.freshness.status}.
         </p>
       </div>
 
