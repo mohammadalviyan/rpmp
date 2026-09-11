@@ -1,4 +1,3 @@
-import { apiDataProvider } from "@/lib/data/api-provider";
 import { mockDataProvider } from "@/lib/data/mock-provider";
 import type { RpaDataProvider } from "@/lib/data/types";
 
@@ -10,8 +9,6 @@ export function getRpaDataMode(
   return value === "api" ? "api" : "mock";
 }
 
-export function getRpaDataProvider(
-  mode = getRpaDataMode(),
-): RpaDataProvider {
-  return mode === "api" ? apiDataProvider : mockDataProvider;
+export function getRpaDataProvider(): RpaDataProvider {
+  return mockDataProvider;
 }
