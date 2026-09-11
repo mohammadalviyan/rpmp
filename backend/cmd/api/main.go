@@ -17,6 +17,7 @@ import (
 	"time"
 
 	"github.com/jackc/pgx/v5/pgxpool"
+	"github.com/mohammadalviyan/rpmp/backend/internal/adapter/csvsource"
 	"github.com/mohammadalviyan/rpmp/backend/internal/auth"
 	"github.com/mohammadalviyan/rpmp/backend/internal/handler"
 	"github.com/mohammadalviyan/rpmp/backend/internal/repo"
@@ -31,6 +32,7 @@ type config struct {
 	allowedOrigin string
 	accessTTL     time.Duration
 	localHTTP     bool
+	sourceCSVPath string
 }
 
 func loadConfig() (config, error) {
@@ -44,6 +46,7 @@ func loadConfig() (config, error) {
 		jwtSecret:     os.Getenv("RPMP_JWT_SECRET"),
 		allowedOrigin: os.Getenv("RPMP_ALLOWED_ORIGIN"),
 		accessTTL:     30 * time.Minute,
+		sourceCSVPath: os.Getenv("RPMP_SOURCE_CSV_PATH"),
 	}
 	if raw := os.Getenv("RPMP_ACCESS_TTL"); raw != "" {
 		ttl, err := time.ParseDuration(raw)
@@ -70,6 +73,9 @@ func loadConfig() (config, error) {
 	}
 	if cfg.allowedOrigin == "" {
 		return config{}, errors.New("RPMP_ALLOWED_ORIGIN is required")
+	}
+	if cfg.sourceCSVPath == "" {
+		return config{}, errors.New("RPMP_SOURCE_CSV_PATH is required for CSV mode")
 	}
 	origin, err := url.Parse(cfg.allowedOrigin)
 	if err != nil || origin.Host == "" || origin.User != nil || origin.RawQuery != "" || origin.Fragment != "" || origin.Path != "" {
@@ -175,14 +181,18 @@ func run(ctx context.Context) error {
 	dashboardSummary := usecase.NewDashboardSummaryFromRepository(postgres)
 	dashboardExecutionTrend := usecase.NewDashboardExecutionTrendFromRepository(postgres)
 	dashboardErrors := usecase.NewDashboardErrorsFromRepository(postgres)
+	syncRunner := usecase.NewSyncRunner(csvsource.New(cfg.sourceCSVPath), repo.NewSyncPostgres(pool))
+	syncStatus := usecase.NewGetSyncStatus(postgres)
+	startSync := usecase.NewStartSync(syncRunner, ctx)
 	authHandler := handler.NewAuth(login, current, logout, handler.CookieConfig{
 		TTL: cfg.accessTTL, Secure: !cfg.localHTTP,
 	})
 	dashboardHandler := handler.NewDashboard(dashboardSummary, dashboardExecutionTrend, dashboardErrors)
+	syncHandler := handler.NewSync(syncStatus, startSync)
 
 	server := &http.Server{
 		Addr:              cfg.addr,
-		Handler:           handler.NewRouter(authHandler, dashboardHandler, tokens, cfg.allowedOrigin),
+		Handler:           handler.NewRouter(authHandler, dashboardHandler, tokens, cfg.allowedOrigin, syncHandler),
 		ReadHeaderTimeout: 5 * time.Second,
 		ReadTimeout:       10 * time.Second,
 		WriteTimeout:      10 * time.Second,

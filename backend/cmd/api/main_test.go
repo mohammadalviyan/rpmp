@@ -16,6 +16,7 @@ func TestLoadConfigDefaultsToSecureCookieAndThirtyMinutes(t *testing.T) {
 	t.Setenv("RPMP_ALLOWED_ORIGIN", "https://rpmp.example")
 	t.Setenv("RPMP_ACCESS_TTL", "")
 	t.Setenv("RPMP_LOCAL_HTTP", "")
+	t.Setenv("RPMP_SOURCE_CSV_PATH", "/tmp/source.csv")
 
 	cfg, err := loadConfig()
 	if err != nil {
@@ -31,6 +32,7 @@ func TestLoadConfigAllowsExplicitLocalHTTP(t *testing.T) {
 	t.Setenv("RPMP_JWT_SECRET", "01234567890123456789012345678901")
 	t.Setenv("RPMP_ALLOWED_ORIGIN", "http://localhost:3000")
 	t.Setenv("RPMP_LOCAL_HTTP", "true")
+	t.Setenv("RPMP_SOURCE_CSV_PATH", "/tmp/source.csv")
 
 	cfg, err := loadConfig()
 	if err != nil {
@@ -45,6 +47,7 @@ func TestLoadConfigRequiresServerSecrets(t *testing.T) {
 	t.Setenv("RPMP_DATABASE_URL", "postgres://example")
 	t.Setenv("RPMP_JWT_SECRET", "")
 	t.Setenv("RPMP_ALLOWED_ORIGIN", "https://rpmp.example")
+	t.Setenv("RPMP_SOURCE_CSV_PATH", "/tmp/source.csv")
 	if _, err := loadConfig(); err == nil {
 		t.Fatal("missing JWT secret accepted")
 	}
@@ -57,10 +60,12 @@ func TestLoadConfigReadsDotEnvWhenProcessEnvIsUnset(t *testing.T) {
 	t.Setenv("RPMP_JWT_SECRET", "")
 	t.Setenv("RPMP_ALLOWED_ORIGIN", "")
 	t.Setenv("RPMP_LOCAL_HTTP", "")
+	t.Setenv("RPMP_SOURCE_CSV_PATH", "")
 	contents := "RPMP_DATABASE_URL=postgres://example\n" +
 		"RPMP_JWT_SECRET=01234567890123456789012345678901\n" +
 		"RPMP_ALLOWED_ORIGIN=http://localhost:3000\n" +
-		"RPMP_LOCAL_HTTP=true\n"
+		"RPMP_LOCAL_HTTP=true\n" +
+		"RPMP_SOURCE_CSV_PATH=/tmp/source.csv\n"
 	if err := os.WriteFile(filepath.Join(dir, ".env"), []byte(contents), 0o600); err != nil {
 		t.Fatal(err)
 	}
@@ -79,6 +84,7 @@ func TestLoadConfigRejectsInsecureNonLocalOrigin(t *testing.T) {
 	t.Setenv("RPMP_JWT_SECRET", "01234567890123456789012345678901")
 	t.Setenv("RPMP_ALLOWED_ORIGIN", "http://rpmp.example")
 	t.Setenv("RPMP_LOCAL_HTTP", "true")
+	t.Setenv("RPMP_SOURCE_CSV_PATH", "/tmp/source.csv")
 	if _, err := loadConfig(); err == nil {
 		t.Fatal("insecure non-local origin accepted")
 	}

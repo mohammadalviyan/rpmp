@@ -156,6 +156,8 @@ func writeError(w http.ResponseWriter, err error) {
 		status, message = http.StatusBadRequest, "The requested period is invalid."
 	case domain.KindSourceUnavailable:
 		status, message = http.StatusServiceUnavailable, "Operational data is temporarily unavailable."
+	case domain.KindSyncInProgress:
+		status, message = http.StatusConflict, "A synchronization is already in progress."
 	default:
 		kind = domain.KindInternal
 	}

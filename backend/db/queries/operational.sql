@@ -76,6 +76,12 @@ SELECT id, started_at, finished_at, status, rows_read, rows_written, error_code
 FROM sync_runs
 WHERE id = $1;
 
+-- name: GetLatestSyncRun :one
+SELECT id, started_at, finished_at, status, rows_read, rows_written, error_code
+FROM sync_runs
+ORDER BY started_at DESC, id DESC
+LIMIT 1;
+
 -- name: GetDashboardFreshness :one
 SELECT
     (

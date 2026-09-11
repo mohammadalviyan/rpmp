@@ -113,6 +113,7 @@ const (
 	SyncRunRunning SyncRunStatus = "running"
 	SyncRunSuccess SyncRunStatus = "success"
 	SyncRunFailure SyncRunStatus = "failure"
+	SyncRunNever   SyncRunStatus = "never"
 )
 
 type SyncRun struct {

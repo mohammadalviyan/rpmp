@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"log/slog"
 	"time"
 
 	"github.com/google/uuid"
@@ -38,14 +39,61 @@ func NewSyncRunner(source AggregateSource, sessions domain.SyncSessionFactory) *
 	}
 }
 
-func (r *SyncRunner) Run(ctx context.Context) (result SyncResult, err error) {
+func (r *SyncRunner) Run(ctx context.Context) (SyncResult, error) {
+	result, session, err := r.start(ctx)
+	if err != nil {
+		return result, err
+	}
+	return r.execute(ctx, session, result)
+}
+
+func (r *SyncRunner) Start(ctx, workerCtx context.Context) (domain.SyncRun, error) {
+	result, session, err := r.start(ctx)
+	if err != nil {
+		return domain.SyncRun{}, err
+	}
+	if workerCtx == nil {
+		workerCtx = context.Background()
+	}
+	go func() {
+		if _, runErr := r.execute(workerCtx, session, result); runErr != nil {
+			slog.Error("background sync failed", "run_id", result.Run.ID)
+		}
+	}()
+	return result.Run, nil
+}
+
+func (r *SyncRunner) start(ctx context.Context) (SyncResult, domain.SyncSession, error) {
+	var result SyncResult
 	session, acquired, err := r.sessions.TryAcquireSyncSession(ctx)
 	if err != nil {
-		return result, fmt.Errorf("acquire sync session: %w", err)
+		return result, nil, fmt.Errorf("acquire sync session: %w", err)
 	}
 	if !acquired {
-		return result, domain.NewError(domain.KindSyncInProgress, errors.New("another sync holds the advisory lock"))
+		return result, nil, domain.NewError(domain.KindSyncInProgress, errors.New("another sync holds the advisory lock"))
 	}
+
+	runID := r.newID()
+	startedAt := r.now().UTC()
+	run, err := session.StartSyncRun(ctx, domain.SyncRunStart{ID: runID, StartedAt: startedAt})
+	if err != nil {
+		releaseCtx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+		defer cancel()
+		return result, nil, errors.Join(
+			fmt.Errorf("start sync run: %w", err),
+			session.Release(releaseCtx),
+		)
+	}
+	result.Run = run
+	return result, session, nil
+}
+
+func (r *SyncRunner) execute(
+	ctx context.Context,
+	session domain.SyncSession,
+	result SyncResult,
+) (completed SyncResult, err error) {
+	completed = result
 	defer func() {
 		releaseCtx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 		defer cancel()
@@ -54,40 +102,32 @@ func (r *SyncRunner) Run(ctx context.Context) (result SyncResult, err error) {
 		}
 	}()
 
-	runID := r.newID()
-	startedAt := r.now().UTC()
-	run, err := session.StartSyncRun(ctx, domain.SyncRunStart{ID: runID, StartedAt: startedAt})
-	if err != nil {
-		return result, fmt.Errorf("start sync run: %w", err)
-	}
-	result.Run = run
-
 	snapshot, err := r.source.Read(ctx)
 	if err != nil {
-		finishErr := r.finishFailure(session, runID, 0, 0, syncErrorSourceRead)
-		return result, errors.Join(fmt.Errorf("read aggregate source: %w", err), finishErr)
+		finishErr := r.finishFailure(session, result.Run.ID, 0, 0, syncErrorSourceRead)
+		return completed, errors.Join(fmt.Errorf("read aggregate source: %w", err), finishErr)
 	}
 	rowsRead := int32(len(snapshot.Rows))
-	published, err := session.PublishSnapshot(ctx, runID, snapshot)
+	published, err := session.PublishSnapshot(ctx, result.Run.ID, snapshot)
 	if err != nil {
-		finishErr := r.finishFailure(session, runID, rowsRead, 0, syncErrorSnapshotWrite)
-		return result, errors.Join(fmt.Errorf("publish aggregate snapshot: %w", err), finishErr)
+		finishErr := r.finishFailure(session, result.Run.ID, rowsRead, 0, syncErrorSnapshotWrite)
+		return completed, errors.Join(fmt.Errorf("publish aggregate snapshot: %w", err), finishErr)
 	}
 	finishCtx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 	finished, err := session.FinishSyncRun(finishCtx, domain.SyncRunFinish{
-		ID: runID, FinishedAt: r.now().UTC(), Status: domain.SyncRunSuccess,
+		ID: result.Run.ID, FinishedAt: r.now().UTC(), Status: domain.SyncRunSuccess,
 		RowsRead: rowsRead, RowsWritten: published.RowsWritten,
 	})
 	if err != nil {
 		finishErr := r.finishFailure(
-			session, runID, rowsRead, published.RowsWritten, syncErrorFinalize,
+			session, result.Run.ID, rowsRead, published.RowsWritten, syncErrorFinalize,
 		)
-		return result, errors.Join(fmt.Errorf("finish successful sync run: %w", err), finishErr)
+		return completed, errors.Join(fmt.Errorf("finish successful sync run: %w", err), finishErr)
 	}
-	result.Run = finished
-	result.Idempotent = published.Idempotent
-	return result, nil
+	completed.Run = finished
+	completed.Idempotent = published.Idempotent
+	return completed, nil
 }
 
 func (r *SyncRunner) finishFailure(
