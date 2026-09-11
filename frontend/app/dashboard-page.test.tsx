@@ -2,7 +2,8 @@ import { render, screen } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import DashboardPage from "@/app/(protected)/dashboard/page";
-import { getDashboardOverview } from "@/lib/api/server";
+import { getCurrentUser, getDashboardOverview } from "@/lib/api/server";
+import type { DashboardOverviewResult } from "@/lib/api/server";
 import {
   getRpaDataMode,
   getRpaDataProvider,
@@ -14,14 +15,19 @@ vi.mock("@/components/api-overview-dashboard", () => ({
     summary,
     trend,
     errors,
+    canTriggerSync,
   }: {
     summary: { status: string; data?: { kpis: { total_use_cases: number } } };
     trend: { status: string; data?: { points: unknown[] } };
     errors: { status: string; data?: { groups: unknown[] } };
+    canTriggerSync?: boolean;
   }) => (
     <div>
-      API values: {summary.data?.kpis.total_use_cases},{" "}
-      {trend.data?.points.length}, {errors.data?.groups.length}
+      <p>
+        API values: {summary.data?.kpis.total_use_cases},{" "}
+        {trend.data?.points.length}, {errors.data?.groups.length}
+      </p>
+      <p>Sync control: {canTriggerSync ? "shown" : "hidden"}</p>
     </div>
   ),
 }));
@@ -48,6 +54,7 @@ vi.mock("@/components/overview-dashboard", () => ({
 }));
 
 vi.mock("@/lib/api/server", () => ({
+  getCurrentUser: vi.fn(),
   getDashboardOverview: vi.fn(),
 }));
 
@@ -56,9 +63,68 @@ vi.mock("@/lib/data/provider", () => ({
   getRpaDataProvider: vi.fn(),
 }));
 
+const mockGetCurrentUser = vi.mocked(getCurrentUser);
 const mockGetDashboardOverview = vi.mocked(getDashboardOverview);
+
 const mockGetRpaDataMode = vi.mocked(getRpaDataMode);
 const mockGetRpaDataProvider = vi.mocked(getRpaDataProvider);
+
+const viewer = {
+  id: "user-1",
+  employee_id: "10000001",
+  display_name: "Viewer",
+  role: "viewer" as const,
+};
+
+const admin = { ...viewer, id: "user-2", display_name: "Admin", role: "admin" as const };
+
+const period = {
+  from: "2026-08-07T00:00:00Z",
+  to: "2026-09-06T00:00:00Z",
+  timezone: "UTC",
+};
+
+const successOverview: DashboardOverviewResult = {
+  status: "success",
+  summary: {
+    status: "success",
+    data: {
+      period,
+      freshness: {
+        status: "fresh",
+        last_successful_refresh_at: "2026-09-06T00:00:00Z",
+      },
+      kpis: {
+        total_use_cases: 42,
+        active_use_cases: 39,
+        execution_volume: 110,
+        success_rate: 90,
+        failed_executions: 11,
+      },
+    },
+  },
+  trend: {
+    status: "success",
+    data: {
+      period,
+      points: [
+        {
+          bucket: "2026-09-01T00:00:00Z",
+          label: "Sep",
+          success: 99,
+          failure: 11,
+        },
+      ],
+    },
+  },
+  errors: {
+    status: "success",
+    data: {
+      period,
+      groups: [{ code: "timeout", label: "Timeout", count: 11 }],
+    },
+  },
+};
 
 describe("DashboardPage", () => {
   beforeEach(() => {
@@ -67,65 +133,34 @@ describe("DashboardPage", () => {
 
   it("uses only the three dashboard API resources in api mode", async () => {
     mockGetRpaDataMode.mockReturnValue("api");
-    mockGetDashboardOverview.mockResolvedValue({
-      status: "success",
-      summary: {
-        status: "success",
-        data: {
-          period: {
-            from: "2026-08-07T00:00:00Z",
-            to: "2026-09-06T00:00:00Z",
-            timezone: "UTC",
-          },
-          freshness: {
-            status: "fresh",
-            last_successful_refresh_at: "2026-09-06T00:00:00Z",
-          },
-          kpis: {
-            total_use_cases: 42,
-            active_use_cases: 39,
-            execution_volume: 110,
-            success_rate: 90,
-            failed_executions: 11,
-          },
-        },
-      },
-      trend: {
-        status: "success",
-        data: {
-          period: {
-            from: "2026-08-07T00:00:00Z",
-            to: "2026-09-06T00:00:00Z",
-            timezone: "UTC",
-          },
-          points: [
-            {
-              bucket: "2026-09-01T00:00:00Z",
-              label: "Sep",
-              success: 99,
-              failure: 11,
-            },
-          ],
-        },
-      },
-      errors: {
-        status: "success",
-        data: {
-          period: {
-            from: "2026-08-07T00:00:00Z",
-            to: "2026-09-06T00:00:00Z",
-            timezone: "UTC",
-          },
-          groups: [{ code: "timeout", label: "Timeout", count: 11 }],
-        },
-      },
-    });
+    mockGetCurrentUser.mockResolvedValue(viewer);
+    mockGetDashboardOverview.mockResolvedValue(successOverview);
 
     render(await DashboardPage());
 
     expect(screen.getByText("API values: 42, 1, 1")).toBeVisible();
     expect(mockGetDashboardOverview).toHaveBeenCalledOnce();
     expect(mockGetRpaDataProvider).not.toHaveBeenCalled();
+  });
+
+  it("withholds the sync control from a viewer", async () => {
+    mockGetRpaDataMode.mockReturnValue("api");
+    mockGetCurrentUser.mockResolvedValue(viewer);
+    mockGetDashboardOverview.mockResolvedValue(successOverview);
+
+    render(await DashboardPage());
+
+    expect(screen.getByText("Sync control: hidden")).toBeVisible();
+  });
+
+  it("gives the sync control to an admin", async () => {
+    mockGetRpaDataMode.mockReturnValue("api");
+    mockGetCurrentUser.mockResolvedValue(admin);
+    mockGetDashboardOverview.mockResolvedValue(successOverview);
+
+    render(await DashboardPage());
+
+    expect(screen.getByText("Sync control: shown")).toBeVisible();
   });
 
   it("preserves the complete FE-06 Overview in mock mode", async () => {
