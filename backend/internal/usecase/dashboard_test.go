@@ -19,6 +19,34 @@ func (f fakeSource) Snapshot(context.Context) (domain.SourceSnapshot, error) {
 	return f.snapshot, f.err
 }
 
+type fakeDashboardRepository struct {
+	summary domain.DashboardSummaryAggregate
+	trend   []domain.ExecutionTrendAggregate
+	groups  []domain.ErrorGroup
+	err     error
+}
+
+func (f fakeDashboardRepository) AggregateDashboardSummary(
+	context.Context,
+	domain.Period,
+) (domain.DashboardSummaryAggregate, error) {
+	return f.summary, f.err
+}
+
+func (f fakeDashboardRepository) AggregateDashboardExecutionTrend(
+	context.Context,
+	domain.Period,
+) ([]domain.ExecutionTrendAggregate, error) {
+	return f.trend, f.err
+}
+
+func (f fakeDashboardRepository) AggregateDashboardErrors(
+	context.Context,
+	domain.Period,
+) ([]domain.ErrorGroup, error) {
+	return f.groups, f.err
+}
+
 func TestDashboardSummaryFromStubFixtures(t *testing.T) {
 	source, err := stub.New()
 	if err != nil {
@@ -256,5 +284,64 @@ func TestDashboardChartsForbiddenAndSourceUnavailable(t *testing.T) {
 	}
 	if _, err := errorsUsecase.Execute(context.Background(), viewer); domain.ErrorKindOf(err) != domain.KindSourceUnavailable {
 		t.Fatalf("errors source err = %v", err)
+	}
+}
+
+func TestDashboardUsecasesFromRepositoryAggregates(t *testing.T) {
+	from := "2026-01-15T00:00:00Z"
+	to := "2026-04-01T00:00:00Z"
+	freshAt := time.Date(2026, 4, 1, 1, 0, 0, 0, time.UTC)
+	repository := fakeDashboardRepository{
+		summary: domain.DashboardSummaryAggregate{
+			TotalUseCases: 8, ActiveUseCases: 6, ExecutionVolume: 4,
+			SuccessfulCount: 3, FailedExecutions: 1,
+			Freshness: domain.Freshness{
+				Status: domain.FreshnessSyncFailed, LastSuccessfulRefreshAt: freshAt,
+			},
+		},
+		trend: []domain.ExecutionTrendAggregate{
+			{Bucket: time.Date(2026, 1, 1, 0, 0, 0, 0, time.UTC), Success: 2, Failure: 1},
+			{Bucket: time.Date(2026, 3, 1, 0, 0, 0, 0, time.UTC), Success: 1},
+		},
+		groups: []domain.ErrorGroup{
+			{Code: "timeout", Label: "Timeout", Count: 2},
+			{Code: "validation", Label: "Validation", Count: 1},
+		},
+	}
+	input := DashboardInput{
+		Principal: domain.Principal{Role: domain.RoleViewer},
+		From:      from,
+		To:        to,
+	}
+
+	summary, err := NewDashboardSummaryFromRepository(repository).Execute(context.Background(), input)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if summary.KPIs.TotalUseCases != 8 || summary.KPIs.ActiveUseCases != 6 ||
+		summary.KPIs.ExecutionVolume != 4 || summary.KPIs.FailedExecutions != 1 ||
+		summary.KPIs.SuccessRate == nil || *summary.KPIs.SuccessRate != 75 ||
+		summary.Freshness.Status != domain.FreshnessSyncFailed ||
+		!summary.Freshness.LastSuccessfulRefreshAt.Equal(freshAt) {
+		t.Fatalf("repository summary = %#v", summary)
+	}
+
+	trend, err := NewDashboardExecutionTrendFromRepository(repository).Execute(context.Background(), input)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(trend.Points) != 3 ||
+		trend.Points[0].Success != 2 || trend.Points[0].Failure != 1 ||
+		trend.Points[1].Success != 0 || trend.Points[1].Failure != 0 ||
+		trend.Points[2].Success != 1 || trend.Points[2].Failure != 0 {
+		t.Fatalf("repository trend = %#v", trend.Points)
+	}
+
+	groups, err := NewDashboardErrorsFromRepository(repository).Execute(context.Background(), input)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(groups.Groups) != 2 || groups.Groups[0].Code != "timeout" || groups.Groups[1].Code != "validation" {
+		t.Fatalf("repository errors = %#v", groups.Groups)
 	}
 }

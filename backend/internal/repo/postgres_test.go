@@ -190,6 +190,14 @@ func TestPostgresRepositoryAndMigration(t *testing.T) {
 		t.Fatalf("find unlinked execution error: executionError=%#v err=%v", foundUnlinkedError, err)
 	}
 
+	dashboardPeriod := domain.Period{
+		From: now,
+		To:   now.Add(2 * time.Second),
+	}
+	if _, err := repository.AggregateDashboardSummary(ctx, dashboardPeriod); domain.ErrorKindOf(err) != domain.KindSourceUnavailable {
+		t.Fatalf("rows without a successful sync must be unavailable: %v", err)
+	}
+
 	syncRunID := uuid.NewString()
 	started, err := repository.StartSyncRun(ctx, domain.SyncRunStart{ID: syncRunID, StartedAt: now})
 	if err != nil || started.Status != domain.SyncRunRunning || started.FinishedAt != nil ||
@@ -208,6 +216,69 @@ func TestPostgresRepositoryAndMigration(t *testing.T) {
 	foundSyncRun, err := repository.FindSyncRunByID(ctx, syncRunID)
 	if err != nil || foundSyncRun.Status != domain.SyncRunSuccess {
 		t.Fatalf("find sync run: run=%#v err=%v", foundSyncRun, err)
+	}
+
+	dashboardSummary, err := repository.AggregateDashboardSummary(ctx, dashboardPeriod)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if dashboardSummary.TotalUseCases != 1 || dashboardSummary.ActiveUseCases != 0 ||
+		dashboardSummary.ExecutionVolume != 2 || dashboardSummary.SuccessfulCount != 1 ||
+		dashboardSummary.FailedExecutions != 1 ||
+		dashboardSummary.Freshness.Status != domain.FreshnessFresh ||
+		!dashboardSummary.Freshness.LastSuccessfulRefreshAt.Equal(finishedAt) {
+		t.Fatalf("dashboard summary aggregate = %#v", dashboardSummary)
+	}
+	halfOpenSummary, err := repository.AggregateDashboardSummary(ctx, domain.Period{
+		From: now,
+		To:   now.Add(time.Second),
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if halfOpenSummary.ExecutionVolume != 1 || halfOpenSummary.SuccessfulCount != 1 ||
+		halfOpenSummary.FailedExecutions != 0 {
+		t.Fatalf("dashboard [from,to) aggregate = %#v", halfOpenSummary)
+	}
+	trend, err := repository.AggregateDashboardExecutionTrend(ctx, dashboardPeriod)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(trend) != 1 || trend[0].Success != 1 || trend[0].Failure != 1 ||
+		trend[0].Bucket.Month() != now.Month() {
+		t.Fatalf("dashboard trend aggregate = %#v", trend)
+	}
+	errorGroups, err := repository.AggregateDashboardErrors(ctx, dashboardPeriod)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(errorGroups) != 2 ||
+		errorGroups[0] != (domain.ErrorGroup{Code: "faulted", Label: "Faulted", Count: 1}) ||
+		errorGroups[1] != (domain.ErrorGroup{Code: "stopped", Label: "Stopped", Count: 1}) {
+		t.Fatalf("dashboard error aggregates = %#v", errorGroups)
+	}
+
+	laterFailureID := uuid.NewString()
+	if _, err := repository.StartSyncRun(ctx, domain.SyncRunStart{
+		ID: laterFailureID, StartedAt: finishedAt.Add(time.Minute),
+	}); err != nil {
+		t.Fatal(err)
+	}
+	failureCode := "source_read_failed"
+	if _, err := repository.FinishSyncRun(ctx, domain.SyncRunFinish{
+		ID: laterFailureID, FinishedAt: finishedAt.Add(2 * time.Minute), Status: domain.SyncRunFailure,
+		ErrorCode: &failureCode,
+	}); err != nil {
+		t.Fatal(err)
+	}
+	lastGood, err := repository.AggregateDashboardSummary(ctx, dashboardPeriod)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if lastGood.Freshness.Status != domain.FreshnessSyncFailed ||
+		!lastGood.Freshness.LastSuccessfulRefreshAt.Equal(finishedAt) ||
+		lastGood.ExecutionVolume != 2 {
+		t.Fatalf("last-good dashboard aggregate = %#v", lastGood)
 	}
 
 	syncRepository := NewSyncPostgres(pool)
@@ -331,7 +402,7 @@ func TestPostgresRepositoryAndMigration(t *testing.T) {
 	if conflictSnapshots != 0 {
 		t.Fatalf("failed publish left %d snapshots", conflictSnapshots)
 	}
-	failureCode := "snapshot_write_failed"
+	failureCode = "snapshot_write_failed"
 	recorded, err := failedSession.FinishSyncRun(ctx, domain.SyncRunFinish{
 		ID: failedRunID, FinishedAt: now, Status: domain.SyncRunFailure,
 		RowsRead: 2, RowsWritten: 0, ErrorCode: &failureCode,

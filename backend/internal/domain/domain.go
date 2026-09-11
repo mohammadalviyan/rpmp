@@ -187,7 +187,10 @@ type SyncSessionFactory interface {
 
 type FreshnessStatus string
 
-const FreshnessFresh FreshnessStatus = "fresh"
+const (
+	FreshnessFresh      FreshnessStatus = "fresh"
+	FreshnessSyncFailed FreshnessStatus = "sync_failed"
+)
 
 type Freshness struct {
 	Status                  FreshnessStatus
@@ -212,6 +215,21 @@ type KPIs struct {
 	ExecutionVolume  int
 	SuccessRate      *float64
 	FailedExecutions int
+}
+
+type DashboardSummaryAggregate struct {
+	TotalUseCases    int
+	ActiveUseCases   int
+	ExecutionVolume  int
+	SuccessfulCount  int
+	FailedExecutions int
+	Freshness        Freshness
+}
+
+type ExecutionTrendAggregate struct {
+	Bucket  time.Time
+	Success int
+	Failure int
 }
 
 type DashboardSummary struct {

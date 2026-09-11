@@ -76,6 +76,79 @@ SELECT id, started_at, finished_at, status, rows_read, rows_written, error_code
 FROM sync_runs
 WHERE id = $1;
 
+-- name: GetDashboardFreshness :one
+SELECT
+    (
+        SELECT finished_at
+        FROM sync_runs
+        WHERE status = 'success'
+          AND finished_at IS NOT NULL
+        ORDER BY finished_at DESC, id DESC
+        LIMIT 1
+    ) AS last_successful_refresh_at,
+    coalesce(
+        (
+            SELECT status
+            FROM sync_runs
+            ORDER BY started_at DESC, id DESC
+            LIMIT 1
+        ),
+        ''
+    )::text AS latest_status;
+
+-- name: GetDashboardSummaryAggregate :one
+SELECT
+    (SELECT count(use_cases.id) FROM use_cases)::bigint AS total_use_cases,
+    (SELECT count(use_cases.id) FROM use_cases WHERE use_cases.status = 'active')::bigint AS active_use_cases,
+    (
+        SELECT count(volume_executions.id)
+        FROM executions AS volume_executions
+        WHERE volume_executions.occurred_at >= sqlc.arg(period_from)
+          AND volume_executions.occurred_at < sqlc.arg(period_to)
+    )::bigint AS execution_volume,
+    (
+        SELECT count(success_executions.id)
+        FROM executions AS success_executions
+        WHERE success_executions.occurred_at >= sqlc.arg(period_from)
+          AND success_executions.occurred_at < sqlc.arg(period_to)
+          AND success_executions.outcome = 'success'
+    )::bigint AS successful_count,
+    (
+        SELECT count(failed_executions.id)
+        FROM executions AS failed_executions
+        WHERE failed_executions.occurred_at >= sqlc.arg(period_from)
+          AND failed_executions.occurred_at < sqlc.arg(period_to)
+          AND failed_executions.outcome = 'failure'
+    )::bigint AS failed_executions;
+
+-- name: GetDashboardExecutionTrend :many
+SELECT
+    (
+        date_trunc('month', occurred_at AT TIME ZONE 'UTC')
+        AT TIME ZONE 'UTC'
+    )::timestamptz AS bucket,
+    count(id) FILTER (WHERE outcome = 'success')::bigint AS successful_count,
+    count(id) FILTER (WHERE outcome = 'failure')::bigint AS failed_count
+FROM executions
+WHERE occurred_at >= sqlc.arg(period_from)
+  AND occurred_at < sqlc.arg(period_to)
+GROUP BY (
+    date_trunc('month', occurred_at AT TIME ZONE 'UTC')
+    AT TIME ZONE 'UTC'
+)
+ORDER BY bucket ASC;
+
+-- name: GetDashboardErrorGroups :many
+SELECT
+    code,
+    label,
+    count(id)::bigint AS error_count
+FROM execution_errors
+WHERE occurred_at >= sqlc.arg(period_from)
+  AND occurred_at < sqlc.arg(period_to)
+GROUP BY code, label
+ORDER BY error_count DESC, code ASC, label ASC;
+
 -- name: InsertAggregateSnapshot :one
 INSERT INTO aggregate_snapshots (
     id,

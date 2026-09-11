@@ -218,6 +218,102 @@ func (r *Postgres) FindSyncRunByID(ctx context.Context, id string) (domain.SyncR
 	return mapSyncRun(row)
 }
 
+func (r *Postgres) AggregateDashboardSummary(
+	ctx context.Context,
+	period domain.Period,
+) (domain.DashboardSummaryAggregate, error) {
+	freshness, err := r.dashboardFreshness(ctx)
+	if err != nil {
+		return domain.DashboardSummaryAggregate{}, err
+	}
+	row, err := r.queries.GetDashboardSummaryAggregate(ctx, dbgen.GetDashboardSummaryAggregateParams{
+		PeriodFrom: pgtype.Timestamptz{Time: period.From, Valid: true},
+		PeriodTo:   pgtype.Timestamptz{Time: period.To, Valid: true},
+	})
+	if err != nil {
+		return domain.DashboardSummaryAggregate{}, err
+	}
+	return domain.DashboardSummaryAggregate{
+		TotalUseCases:    int(row.TotalUseCases),
+		ActiveUseCases:   int(row.ActiveUseCases),
+		ExecutionVolume:  int(row.ExecutionVolume),
+		SuccessfulCount:  int(row.SuccessfulCount),
+		FailedExecutions: int(row.FailedExecutions),
+		Freshness:        freshness,
+	}, nil
+}
+
+func (r *Postgres) AggregateDashboardExecutionTrend(
+	ctx context.Context,
+	period domain.Period,
+) ([]domain.ExecutionTrendAggregate, error) {
+	if _, err := r.dashboardFreshness(ctx); err != nil {
+		return nil, err
+	}
+	rows, err := r.queries.GetDashboardExecutionTrend(ctx, dbgen.GetDashboardExecutionTrendParams{
+		PeriodFrom: pgtype.Timestamptz{Time: period.From, Valid: true},
+		PeriodTo:   pgtype.Timestamptz{Time: period.To, Valid: true},
+	})
+	if err != nil {
+		return nil, err
+	}
+	result := make([]domain.ExecutionTrendAggregate, 0, len(rows))
+	for _, row := range rows {
+		if !row.Bucket.Valid {
+			return nil, errors.New("dashboard trend contains invalid database values")
+		}
+		result = append(result, domain.ExecutionTrendAggregate{
+			Bucket:  row.Bucket.Time.UTC(),
+			Success: int(row.SuccessfulCount),
+			Failure: int(row.FailedCount),
+		})
+	}
+	return result, nil
+}
+
+func (r *Postgres) AggregateDashboardErrors(
+	ctx context.Context,
+	period domain.Period,
+) ([]domain.ErrorGroup, error) {
+	if _, err := r.dashboardFreshness(ctx); err != nil {
+		return nil, err
+	}
+	rows, err := r.queries.GetDashboardErrorGroups(ctx, dbgen.GetDashboardErrorGroupsParams{
+		PeriodFrom: pgtype.Timestamptz{Time: period.From, Valid: true},
+		PeriodTo:   pgtype.Timestamptz{Time: period.To, Valid: true},
+	})
+	if err != nil {
+		return nil, err
+	}
+	result := make([]domain.ErrorGroup, 0, len(rows))
+	for _, row := range rows {
+		result = append(result, domain.ErrorGroup{
+			Code: row.Code, Label: row.Label, Count: int(row.ErrorCount),
+		})
+	}
+	return result, nil
+}
+
+func (r *Postgres) dashboardFreshness(ctx context.Context) (domain.Freshness, error) {
+	row, err := r.queries.GetDashboardFreshness(ctx)
+	if err != nil {
+		return domain.Freshness{}, err
+	}
+	// Rows without a completed successful sync are not usable: their publication
+	// may be partial, and the frozen contract requires a real successful timestamp.
+	if !row.LastSuccessfulRefreshAt.Valid {
+		return domain.Freshness{}, domain.NewError(domain.KindSourceUnavailable, nil)
+	}
+	status := domain.FreshnessFresh
+	if row.LatestStatus == string(domain.SyncRunFailure) {
+		status = domain.FreshnessSyncFailed
+	}
+	return domain.Freshness{
+		Status:                  status,
+		LastSuccessfulRefreshAt: row.LastSuccessfulRefreshAt.Time.UTC(),
+	}, nil
+}
+
 func mapQueryError(err error) error {
 	if errors.Is(err, pgx.ErrNoRows) {
 		return domain.NewError(domain.KindNotFound, err)

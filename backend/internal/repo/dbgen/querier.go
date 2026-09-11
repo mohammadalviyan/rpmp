@@ -15,6 +15,10 @@ type Querier interface {
 	CreateAuditEvent(ctx context.Context, arg CreateAuditEventParams) error
 	FinishSyncRun(ctx context.Context, arg FinishSyncRunParams) (SyncRun, error)
 	GetAggregateSnapshotBySourceKey(ctx context.Context, sourceSnapshotKey string) (AggregateSnapshot, error)
+	GetDashboardErrorGroups(ctx context.Context, arg GetDashboardErrorGroupsParams) ([]GetDashboardErrorGroupsRow, error)
+	GetDashboardExecutionTrend(ctx context.Context, arg GetDashboardExecutionTrendParams) ([]GetDashboardExecutionTrendRow, error)
+	GetDashboardFreshness(ctx context.Context) (GetDashboardFreshnessRow, error)
+	GetDashboardSummaryAggregate(ctx context.Context, arg GetDashboardSummaryAggregateParams) (GetDashboardSummaryAggregateRow, error)
 	GetExecutionByID(ctx context.Context, id pgtype.UUID) (Execution, error)
 	GetExecutionErrorByID(ctx context.Context, id pgtype.UUID) (ExecutionError, error)
 	GetSyncRunByID(ctx context.Context, id pgtype.UUID) (SyncRun, error)

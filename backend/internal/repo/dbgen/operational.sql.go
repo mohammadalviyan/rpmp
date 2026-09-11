@@ -86,6 +86,183 @@ func (q *Queries) GetAggregateSnapshotBySourceKey(ctx context.Context, sourceSna
 	return i, err
 }
 
+const getDashboardErrorGroups = `-- name: GetDashboardErrorGroups :many
+SELECT
+    code,
+    label,
+    count(id)::bigint AS error_count
+FROM execution_errors
+WHERE occurred_at >= $1
+  AND occurred_at < $2
+GROUP BY code, label
+ORDER BY error_count DESC, code ASC, label ASC
+`
+
+type GetDashboardErrorGroupsParams struct {
+	PeriodFrom pgtype.Timestamptz
+	PeriodTo   pgtype.Timestamptz
+}
+
+type GetDashboardErrorGroupsRow struct {
+	Code       string
+	Label      string
+	ErrorCount int64
+}
+
+func (q *Queries) GetDashboardErrorGroups(ctx context.Context, arg GetDashboardErrorGroupsParams) ([]GetDashboardErrorGroupsRow, error) {
+	rows, err := q.db.Query(ctx, getDashboardErrorGroups, arg.PeriodFrom, arg.PeriodTo)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []GetDashboardErrorGroupsRow{}
+	for rows.Next() {
+		var i GetDashboardErrorGroupsRow
+		if err := rows.Scan(&i.Code, &i.Label, &i.ErrorCount); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const getDashboardExecutionTrend = `-- name: GetDashboardExecutionTrend :many
+SELECT
+    (
+        date_trunc('month', occurred_at AT TIME ZONE 'UTC')
+        AT TIME ZONE 'UTC'
+    )::timestamptz AS bucket,
+    count(id) FILTER (WHERE outcome = 'success')::bigint AS successful_count,
+    count(id) FILTER (WHERE outcome = 'failure')::bigint AS failed_count
+FROM executions
+WHERE occurred_at >= $1
+  AND occurred_at < $2
+GROUP BY (
+    date_trunc('month', occurred_at AT TIME ZONE 'UTC')
+    AT TIME ZONE 'UTC'
+)
+ORDER BY bucket ASC
+`
+
+type GetDashboardExecutionTrendParams struct {
+	PeriodFrom pgtype.Timestamptz
+	PeriodTo   pgtype.Timestamptz
+}
+
+type GetDashboardExecutionTrendRow struct {
+	Bucket          pgtype.Timestamptz
+	SuccessfulCount int64
+	FailedCount     int64
+}
+
+func (q *Queries) GetDashboardExecutionTrend(ctx context.Context, arg GetDashboardExecutionTrendParams) ([]GetDashboardExecutionTrendRow, error) {
+	rows, err := q.db.Query(ctx, getDashboardExecutionTrend, arg.PeriodFrom, arg.PeriodTo)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []GetDashboardExecutionTrendRow{}
+	for rows.Next() {
+		var i GetDashboardExecutionTrendRow
+		if err := rows.Scan(&i.Bucket, &i.SuccessfulCount, &i.FailedCount); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const getDashboardFreshness = `-- name: GetDashboardFreshness :one
+SELECT
+    (
+        SELECT finished_at
+        FROM sync_runs
+        WHERE status = 'success'
+          AND finished_at IS NOT NULL
+        ORDER BY finished_at DESC, id DESC
+        LIMIT 1
+    ) AS last_successful_refresh_at,
+    coalesce(
+        (
+            SELECT status
+            FROM sync_runs
+            ORDER BY started_at DESC, id DESC
+            LIMIT 1
+        ),
+        ''
+    )::text AS latest_status
+`
+
+type GetDashboardFreshnessRow struct {
+	LastSuccessfulRefreshAt pgtype.Timestamptz
+	LatestStatus            string
+}
+
+func (q *Queries) GetDashboardFreshness(ctx context.Context) (GetDashboardFreshnessRow, error) {
+	row := q.db.QueryRow(ctx, getDashboardFreshness)
+	var i GetDashboardFreshnessRow
+	err := row.Scan(&i.LastSuccessfulRefreshAt, &i.LatestStatus)
+	return i, err
+}
+
+const getDashboardSummaryAggregate = `-- name: GetDashboardSummaryAggregate :one
+SELECT
+    (SELECT count(use_cases.id) FROM use_cases)::bigint AS total_use_cases,
+    (SELECT count(use_cases.id) FROM use_cases WHERE use_cases.status = 'active')::bigint AS active_use_cases,
+    (
+        SELECT count(volume_executions.id)
+        FROM executions AS volume_executions
+        WHERE volume_executions.occurred_at >= $1
+          AND volume_executions.occurred_at < $2
+    )::bigint AS execution_volume,
+    (
+        SELECT count(success_executions.id)
+        FROM executions AS success_executions
+        WHERE success_executions.occurred_at >= $1
+          AND success_executions.occurred_at < $2
+          AND success_executions.outcome = 'success'
+    )::bigint AS successful_count,
+    (
+        SELECT count(failed_executions.id)
+        FROM executions AS failed_executions
+        WHERE failed_executions.occurred_at >= $1
+          AND failed_executions.occurred_at < $2
+          AND failed_executions.outcome = 'failure'
+    )::bigint AS failed_executions
+`
+
+type GetDashboardSummaryAggregateParams struct {
+	PeriodFrom pgtype.Timestamptz
+	PeriodTo   pgtype.Timestamptz
+}
+
+type GetDashboardSummaryAggregateRow struct {
+	TotalUseCases    int64
+	ActiveUseCases   int64
+	ExecutionVolume  int64
+	SuccessfulCount  int64
+	FailedExecutions int64
+}
+
+func (q *Queries) GetDashboardSummaryAggregate(ctx context.Context, arg GetDashboardSummaryAggregateParams) (GetDashboardSummaryAggregateRow, error) {
+	row := q.db.QueryRow(ctx, getDashboardSummaryAggregate, arg.PeriodFrom, arg.PeriodTo)
+	var i GetDashboardSummaryAggregateRow
+	err := row.Scan(
+		&i.TotalUseCases,
+		&i.ActiveUseCases,
+		&i.ExecutionVolume,
+		&i.SuccessfulCount,
+		&i.FailedExecutions,
+	)
+	return i, err
+}
+
 const getExecutionByID = `-- name: GetExecutionByID :one
 SELECT id, use_case_id, occurred_at, outcome, source_ref, created_at
 FROM executions

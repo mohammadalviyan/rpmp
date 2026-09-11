@@ -17,7 +17,6 @@ import (
 	"time"
 
 	"github.com/jackc/pgx/v5/pgxpool"
-	"github.com/mohammadalviyan/rpmp/backend/internal/adapter/stub"
 	"github.com/mohammadalviyan/rpmp/backend/internal/auth"
 	"github.com/mohammadalviyan/rpmp/backend/internal/handler"
 	"github.com/mohammadalviyan/rpmp/backend/internal/repo"
@@ -173,13 +172,9 @@ func run(ctx context.Context) error {
 	login := usecase.NewLogin(postgres, postgres, passwords, tokens, dummyHash)
 	current := usecase.NewCurrentUser(postgres)
 	logout := usecase.NewLogout(postgres)
-	source, err := stub.New()
-	if err != nil {
-		return fmt.Errorf("load source fixtures: %w", err)
-	}
-	dashboardSummary := usecase.NewDashboardSummary(source)
-	dashboardExecutionTrend := usecase.NewDashboardExecutionTrend(source)
-	dashboardErrors := usecase.NewDashboardErrors(source)
+	dashboardSummary := usecase.NewDashboardSummaryFromRepository(postgres)
+	dashboardExecutionTrend := usecase.NewDashboardExecutionTrendFromRepository(postgres)
+	dashboardErrors := usecase.NewDashboardErrorsFromRepository(postgres)
 	authHandler := handler.NewAuth(login, current, logout, handler.CookieConfig{
 		TTL: cfg.accessTTL, Secure: !cfg.localHTTP,
 	})
