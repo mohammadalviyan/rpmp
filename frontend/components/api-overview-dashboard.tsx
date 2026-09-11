@@ -1,6 +1,7 @@
 import { DashboardSummary } from "@/components/dashboard-summary";
 import { ErrorDistribution } from "@/components/error-distribution";
 import { ExecutionTrendChart } from "@/components/execution-trend-chart";
+import { SyncControl } from "@/components/sync-control";
 import type {
   DashboardErrors,
   DashboardSummary as DashboardSummaryData,
@@ -12,6 +13,7 @@ type ApiOverviewDashboardProps = {
   summary: DashboardResourceResult<DashboardSummaryData>;
   trend: DashboardResourceResult<ExecutionTrend>;
   errors: DashboardResourceResult<DashboardErrors>;
+  canTriggerSync?: boolean;
 };
 
 const cardClass =
@@ -41,12 +43,19 @@ export function ApiOverviewDashboard({
   summary,
   trend,
   errors,
+  canTriggerSync = false,
 }: ApiOverviewDashboardProps) {
   return (
     <main
       aria-label="Overview dashboard"
       className="mx-auto w-full max-w-[1600px] space-y-8 px-4 py-8 sm:px-6 lg:px-8"
     >
+      {canTriggerSync ? (
+        <section aria-label="Data sync" className="flex justify-end">
+          <SyncControl />
+        </section>
+      ) : null}
+
       {summary.status === "success" ? (
         <DashboardSummary summary={summary.data} />
       ) : (

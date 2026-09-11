@@ -21,6 +21,21 @@ export type ApiError = {
   message: string;
 };
 
+export type SyncRunStatus = "running" | "success" | "failure" | "never";
+
+export type SyncStatus = {
+  run_id: string | null;
+  status: SyncRunStatus;
+  started_at: string | null;
+  finished_at: string | null;
+  rows_written: number;
+};
+
+export type SyncStarted = {
+  run_id: string;
+  status: "running";
+};
+
 export type DashboardSummary = {
   period: DashboardPeriod;
   freshness: {

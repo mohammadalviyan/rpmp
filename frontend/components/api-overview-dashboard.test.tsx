@@ -1,7 +1,17 @@
 import { render, screen, within } from "@testing-library/react";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 
 import { ApiOverviewDashboard } from "@/components/api-overview-dashboard";
+import type {
+  DashboardErrors,
+  DashboardSummary,
+  ExecutionTrend,
+} from "@/lib/api/types";
+import type { DashboardResourceResult } from "@/lib/api/server";
+
+vi.mock("next/navigation", () => ({
+  useRouter: () => ({ refresh: vi.fn() }),
+}));
 
 const period = {
   from: "2026-08-07T00:00:00Z",
@@ -9,48 +19,54 @@ const period = {
   timezone: "UTC",
 };
 
+const summaryResult: DashboardResourceResult<DashboardSummary> = {
+  status: "success",
+  data: {
+    period,
+    freshness: {
+      status: "fresh",
+      last_successful_refresh_at: "2026-09-06T00:00:00Z",
+    },
+    kpis: {
+      total_use_cases: 25,
+      active_use_cases: 21,
+      execution_volume: 250,
+      success_rate: 92,
+      failed_executions: 20,
+    },
+  },
+};
+
+const trendResult: DashboardResourceResult<ExecutionTrend> = {
+  status: "success",
+  data: {
+    period,
+    points: [
+      {
+        bucket: "2026-09-01T00:00:00Z",
+        label: "Sep",
+        success: 230,
+        failure: 20,
+      },
+    ],
+  },
+};
+
+const errorsResult: DashboardResourceResult<DashboardErrors> = {
+  status: "success",
+  data: {
+    period,
+    groups: [{ code: "timeout", label: "Timeout", count: 20 }],
+  },
+};
+
 describe("ApiOverviewDashboard", () => {
   it("renders only the API-backed Overview data and stored-copy freshness", () => {
     render(
       <ApiOverviewDashboard
-        summary={{
-          status: "success",
-          data: {
-            period,
-            freshness: {
-              status: "fresh",
-              last_successful_refresh_at: "2026-09-06T00:00:00Z",
-            },
-            kpis: {
-              total_use_cases: 25,
-              active_use_cases: 21,
-              execution_volume: 250,
-              success_rate: 92,
-              failed_executions: 20,
-            },
-          },
-        }}
-        trend={{
-          status: "success",
-          data: {
-            period,
-            points: [
-              {
-                bucket: "2026-09-01T00:00:00Z",
-                label: "Sep",
-                success: 230,
-                failure: 20,
-              },
-            ],
-          },
-        }}
-        errors={{
-          status: "success",
-          data: {
-            period,
-            groups: [{ code: "timeout", label: "Timeout", count: 20 }],
-          },
-        }}
+        summary={summaryResult}
+        trend={trendResult}
+        errors={errorsResult}
       />,
     );
 
@@ -100,5 +116,33 @@ describe("ApiOverviewDashboard", () => {
         "Top errors is unavailable because the stored RPMP data source could not be read.",
       ),
     ).toBeVisible();
+  });
+
+  it("keeps the sync control out of the page for a viewer", () => {
+    render(
+      <ApiOverviewDashboard
+        summary={summaryResult}
+        trend={trendResult}
+        errors={errorsResult}
+      />,
+    );
+
+    expect(
+      screen.queryByRole("button", { name: "Sync now" }),
+    ).not.toBeInTheDocument();
+    expect(screen.getByText(/This is a stored RPMP copy/)).toBeVisible();
+  });
+
+  it("offers the sync control to an admin", () => {
+    render(
+      <ApiOverviewDashboard
+        canTriggerSync
+        summary={summaryResult}
+        trend={trendResult}
+        errors={errorsResult}
+      />,
+    );
+
+    expect(screen.getByRole("button", { name: "Sync now" })).toBeEnabled();
   });
 });

@@ -2,7 +2,7 @@ import { redirect } from "next/navigation";
 
 import { ApiOverviewDashboard } from "@/components/api-overview-dashboard";
 import { OverviewDashboard } from "@/components/overview-dashboard";
-import { getDashboardOverview } from "@/lib/api/server";
+import { getCurrentUser, getDashboardOverview } from "@/lib/api/server";
 import {
   getRpaDataMode,
   getRpaDataProvider,
@@ -10,7 +10,10 @@ import {
 
 export default async function DashboardPage() {
   if (getRpaDataMode() === "api") {
-    const overview = await getDashboardOverview();
+    const [overview, user] = await Promise.all([
+      getDashboardOverview(),
+      getCurrentUser(),
+    ]);
 
     if (overview.status === "unauthenticated") {
       redirect("/login");
@@ -18,6 +21,7 @@ export default async function DashboardPage() {
 
     return (
       <ApiOverviewDashboard
+        canTriggerSync={user?.role === "admin"}
         errors={overview.errors}
         summary={overview.summary}
         trend={overview.trend}
